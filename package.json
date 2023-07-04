@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/alexjpbanks14/CBIDBTesting#readme",
   "dependencies": {
+    "express": "^4.18.2",
     "mysql2": "^3.4.4"
   }
 }
