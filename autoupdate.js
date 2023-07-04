@@ -2,9 +2,9 @@ import AutoGitUpdate from 'auto-git-update';
 
 const config = {
     repository: 'https://github.com/alexjpbanks14/CBIDBTesting',
-    fromReleases: true,
+    fromReleases: false,
     tempLocation: '/var/tmp',
-    ignoreFiles: ['util/config.js'],
+    ignoreFiles: [''],
     executeOnComplete: '/root/CBIDBTesting/index.js',
     exitOnComplete: true
 }
