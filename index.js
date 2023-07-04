@@ -37,7 +37,7 @@ var lastTime = new Date();
 async function getSunsetTime() {
   if(lastSunset == null || Math.abs((lastTime.getTime() - new Date().getTime()) >= 12)){
     const axiosRes = await axios.get('https://api.sunrise-sunset.org/json?lat=42.3598986&lng=-71.0730733&formatted=0');
-    const time = Date.parse(axiosRes.data.results.sunset);
+    const time = new Date(axiosRes.data.results.sunset);
     lastSunset = time;//timeInUTC.utcOffset(-5);
     //if(lastSunset.isDST()){
     //  lastSunset = lastSunset.add(1, 'hour');
