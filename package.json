@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/alexjpbanks14/CBIDBTesting/issues"
   },
-  "homepage": "https://github.com/alexjpbanks14/CBIDBTesting#readme"
+  "homepage": "https://github.com/alexjpbanks14/CBIDBTesting#readme",
+  "dependencies": {
+    "mysql2": "^3.4.4"
+  }
 }
