@@ -16,8 +16,5 @@
   "bugs": {
     "url": "https://github.com/alexjpbanks14/CBIDBTesting/issues"
   },
-  "homepage": "https://github.com/alexjpbanks14/CBIDBTesting#readme",
-  "dependencies": {
-    "auto-git-update": "^1.1.1"
-  }
+  "homepage": "https://github.com/alexjpbanks14/CBIDBTesting#readme"
 }
