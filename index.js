@@ -44,7 +44,6 @@ async function getSunsetTime() {
     //}
     lastTime = new Date();
   }
-  swagger = 0;
   return lastSunset;
 }
 
