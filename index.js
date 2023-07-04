@@ -32,17 +32,17 @@ function createTables(){
 createTables();
 
 var lastSunset = null;
-var lastTime = moment();
+var lastTime = new Date();
 
 async function getSunsetTime() {
-  if(lastSunset == null || Math.abs(lastTime.diff(moment(), 'hour')) >= 12){
+  if(lastSunset == null || Math.abs((lastTime.getTime() - new Date().getTime()) >= 12)){
     const axiosRes = await axios.get('https://api.sunrise-sunset.org/json?lat=42.3598986&lng=-71.0730733&formatted=0');
-    const timeInUTC = moment(axiosRes.data.results.sunset);
-    lastSunset = timeInUTC.utcOffset(-5);
-    if(lastSunset.isDST()){
-      lastSunset = lastSunset.add(1, 'hour');
-    }
-    lastTime = moment();
+    const time = Date.parse(axiosRes.data.results.sunset);
+    //lastSunset = timeInUTC.utcOffset(-5);
+    //if(lastSunset.isDST()){
+    //  lastSunset = lastSunset.add(1, 'hour');
+    //}
+    lastTime = new Date();
   }
   return lastSunset;
 }
@@ -66,7 +66,7 @@ app.get('/fotv', async (req, res) => {
   //const restrictionGroups = await db.collection(restrictionGroupsCol).list();
   //console.log(restrictions.results[0].props);
   res.json({
-    sunset: sunset.format(),
+    sunset: sunset.toString(),
     restrictions: [],//adaptDBToJson(restrictions, restrictionsID), 
     restrictionGroups: [],// adaptDBToJson(restrictionGroups, restrictionGroupsID),
     activeProgramID: 0
