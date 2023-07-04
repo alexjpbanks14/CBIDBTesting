@@ -1,10 +1,10 @@
 import express from 'express';
-import mysql from 'mysql';
+import mysql2 from 'mysql2';
 const app = express()
 const port = 3000
 
 
-const connection = mysql.createConnection({
+const connection = mysql2.createConnection({
   host: 'localhost',
   user: 'root',
   password: 'tokugawa',
