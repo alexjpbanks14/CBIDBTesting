@@ -5,8 +5,7 @@ const config = {
     fromReleases: false,
     tempLocation: '/var/tmp',
     ignoreFiles: [''],
-    executeOnComplete: '/root/CBIDBTesting/index.js',
-    exitOnComplete: true
+    exitOnComplete: false
 }
 
 const updater = new AutoGitUpdate(config);
