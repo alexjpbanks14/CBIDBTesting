@@ -1,0 +1,23 @@
+{
+  "name": "cbidbtesting",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexjpbanks14/CBIDBTesting.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alexjpbanks14/CBIDBTesting/issues"
+  },
+  "homepage": "https://github.com/alexjpbanks14/CBIDBTesting#readme",
+  "dependencies": {
+    "auto-git-update": "^1.1.1"
+  }
+}
