@@ -104,7 +104,8 @@ function postTable(tableInfo, path){
     const cb = (err, result) => {
       if(err)
         next(err);
-      res.json(result[1][0]).end();
+      else
+        res.json(result[1][0]).end();
     }
     if(body[tableInfo.pk] === undefined){
       insertRowStatement(tableInfo, body, cb);
