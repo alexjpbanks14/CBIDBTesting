@@ -2,11 +2,12 @@ import express from 'express';
 import mysql2 from 'mysql2';
 import cors from 'cors';
 import axios from 'axios';
-
+import fileUpload from 'express-fileupload';
 
 const app = express()
 const port = 3000
 
+app.use(fileUpload())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -67,7 +68,7 @@ var lastSunset = null;
 var lastTime = new Date();
 
 async function getSunsetTime() {
-  if(lastSunset == null || Math.abs((lastTime.getTime() - new Date().getTime()) >= 12)){
+  if(lastSunset == null || Math.abs((lastTime.getTime() - new Date().getTime()) >= 4 * 60 * 60)){
     const axiosRes = await axios.get('https://api.sunrise-sunset.org/json?lat=42.3598986&lng=-71.0730733&formatted=0');
     const time = new Date(axiosRes.data.results.sunset);
     lastSunset = time;//timeInUTC.utcOffset(-5);
@@ -132,6 +133,19 @@ postTable(restrictionTableInfo, '/restriction');
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
+
+app.post('/upload', (req, res) => {
+  // Get the file that was set to our field named "image"
+  const { image } = req.files;
+
+  // If no image submitted, exit
+  if (!image) return res.sendStatus(400);
+
+  // Move the uploaded image to our upload folder
+  image.mv(__dirname + '/upload/' + image.name);
+
+  res.sendStatus(200);
+});
 
 const flagRegex = /".*"/
 
