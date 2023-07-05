@@ -137,8 +137,9 @@ const flagRegex = /".*"/
 
 app.get('/flag-color', (req, res) => {
   axios.get('https://api.community-boating.org/api/flag').then((axiosRes) => {
-    const flagColor = String(axiosRes.data).match(flagRegex)[0];
+    const flagColor = String(axiosRes.data).match(flagRegex)[0].replaceAll('"', '');
     console.log(axiosRes.data);
+    console.log(flagColor);
     res.json({
       flagColor: flagColor
     }).end();
