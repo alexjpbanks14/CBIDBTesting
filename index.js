@@ -136,7 +136,7 @@ app.get('/fotv', async (req, res) => {
     if(err)
       throw err;
     res.json({
-      sunset: sunset.toLocaleString('en-US', { timeZone: 'UTC-5' }),
+      sunset: sunset.toLocaleString('en-US', { timeZone: 'UTC' }),
       restrictions: result[0],//adaptDBToJson(restrictions, restrictionsID), 
       restrictionGroups: result[1],// adaptDBToJson(restrictionGroups, restrictionGroupsID),
       activeProgramID: 0
