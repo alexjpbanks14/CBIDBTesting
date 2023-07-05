@@ -170,9 +170,9 @@ app.get('/fotv', async (req, res, next) => {
 });
 
 app.post('/upload', upload.single('image'), (req, res) => {
-  console.log(req.files);
+  console.log(req.file);
   // Get the file that was set to our field named "image"
-  const image = req.files;
+  const image = req.file;
 
   // If no image submitted, exit
   if (!image) return res.sendStatus(400);
