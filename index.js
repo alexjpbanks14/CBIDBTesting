@@ -99,11 +99,11 @@ function updateRowStatement(tableInfo, body, cb){
 }
 
 function postTable(tableInfo, path){
-  app.post(path, (req, res) => {
+  app.post(path, (req, res, next) => {
     const body = req.body;
     const cb = (err, result) => {
       if(err)
-        throw err;
+        next(err);
       res.json(result[1][0]).end();
     }
     if(body[tableInfo.pk] === undefined){
@@ -130,11 +130,11 @@ app.get('/flag-color', (req, res) => {
   })
 });
 
-app.get('/fotv', async (req, res) => {
+app.get('/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
   connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';', [], (err, result) => {
     if(err)
-      throw err;
+      next(err);
     res.json({
       sunset: sunset.toLocaleString('en-US', { timeZone: 'UTC' }),
       restrictions: result[0],//adaptDBToJson(restrictions, restrictionsID), 
