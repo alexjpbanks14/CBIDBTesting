@@ -93,7 +93,7 @@ function insertRowStatement(tableInfo,body, cb){
 
 function updateRowStatement(tableInfo, body, cb){
   const activeColumns = tableInfo.columns.filter((a) => body[a] !== undefined && a != tableInfo.pk);
-  const query = "UPDATE " + tableInfo.table + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + pk + ' = ?;SELECT * FROM ' + tableInfo.table + ' WHERE ' + tableInfo.pk + ' = ?;';
+  const query = "UPDATE " + tableInfo.table + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.table + ' WHERE ' + tableInfo.pk + ' = ?;';
   const values = [...activeColumns, tableInfo.pk, tableInfo.pk].map((a) => body[a]);
   connection.query(query, values, cb);
 }
