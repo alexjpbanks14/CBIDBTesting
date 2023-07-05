@@ -103,7 +103,7 @@ app.post('/restrictionGroup', (req, res) => {
   const cb = (err, result) => {
     if(err)
       throw err;
-    res.json(result).end();
+    res.json(result[1][0]).end();
   }
   if(body.groupID === undefined){
     insertRowStatement(restrictionGroupTableInfo, body, cb);
