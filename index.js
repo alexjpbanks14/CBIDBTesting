@@ -98,24 +98,24 @@ function updateRowStatement(tableInfo, body, cb){
   connection.query(query, values, cb);
 }
 
-app.post('/restrictionGroup', (req, res) => {
-  const body = req.body;
-  const cb = (err, result) => {
-    if(err)
-      throw err;
-    res.json(result[1][0]).end();
-  }
-  if(body.groupID === undefined){
-    insertRowStatement(restrictionGroupTableInfo, body, cb);
-  }else{
-    updateRowStatement(restrictionGroupTableInfo, body, cb);
-  }
-})
+function postTable(tableInfo, path){
+  app.post(path, (req, res) => {
+    const body = req.body;
+    const cb = (err, result) => {
+      if(err)
+        throw err;
+      res.json(result[1][0]).end();
+    }
+    if(body[tableInfo.pk] === undefined){
+      insertRowStatement(tableInfo, body, cb);
+    }else{
+      updateRowStatement(tableInfo, body, cb);
+    }
+  })
+}
 
-app.post('/restriction', (req, res) => {
-  const body = req.body;
-  const title = String(body.title);
-})
+postTable(restrictionGroupTableInfo, '/restrictionGroup');
+postTable(restrictionTableInfo, '/restriction');
 
 const flagRegex = /".*"/
 
@@ -132,15 +132,19 @@ app.get('/flag-color', (req, res) => {
 
 app.get('/fotv', async (req, res) => {
   const sunset = await getSunsetTime();
+  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';', [], (err, result) => {
+    if(err)
+      throw err;
+    res.json({
+      sunset: sunset.toLocaleString('en-US', { timeZone: 'UTC-5' }),
+      restrictions: result[0],//adaptDBToJson(restrictions, restrictionsID), 
+      restrictionGroups: result[1],// adaptDBToJson(restrictionGroups, restrictionGroupsID),
+      activeProgramID: 0
+    }).end();
+  });
   //const restrictions = await db.collection(restrictionsCol).list();
   //const restrictionGroups = await db.collection(restrictionGroupsCol).list();
   //console.log(restrictions.results[0].props);
-  res.json({
-    sunset: sunset.toLocaleString('en-US', { timeZone: 'UTC-5' }),
-    restrictions: [],//adaptDBToJson(restrictions, restrictionsID), 
-    restrictionGroups: [],// adaptDBToJson(restrictionGroups, restrictionGroupsID),
-    activeProgramID: 0
-  }).end();
 });
 
 app.listen(port, () => {
