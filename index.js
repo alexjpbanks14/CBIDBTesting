@@ -122,7 +122,7 @@ function postTable(tableInfo, path){
       if(err)
         next(err);
       else
-        res.json(result[1][0]).end();
+        res.json(parseRow(result[1][0], tableInfo)).end();
     }
     if(body[tableInfo.pk] === undefined){
       insertRowStatement(tableInfo, body, cb);
