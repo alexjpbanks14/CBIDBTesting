@@ -68,7 +68,7 @@ const restrictionTableInfo = {
     {key: 'active', type: COLUMN_TYPES.BOOLEAN},
     {key: 'textColor', type: COLUMN_TYPES.STRING(10)},
     {key: 'backgroundColor', type: COLUMN_TYPES.STRING(10)},
-    {key: 'textColor', type: COLUMN_TYPES.STRING(30)},
+    {key: 'fontWeight', type: COLUMN_TYPES.STRING(30)},
     {key: 'displayOrder', type: COLUMN_TYPES.NUMBER}
   ]
 }
@@ -157,8 +157,6 @@ const replaceRegex = new RegExp('\"', 'g');
 app.get('/flag-color', (req, res) => {
   axios.get('https://api.community-boating.org/api/flag').then((axiosRes) => {
     const flagColor = String(axiosRes.data).match(flagRegex)[0].replace(replaceRegex, '');
-    console.log(axiosRes.data);
-    console.log(typeof flagColor);
     res.json({
       flagColor: flagColor
     }).end();
@@ -170,7 +168,6 @@ app.get('/flag-color', (req, res) => {
 function parseRow(row, tableInfo){
   const parsedRow = {};
   tableInfo.columns.forEach((a) => {
-    console.log(a);
     parsedRow[a.key] = a.type.SToV(row[a.key]);
   })
   return parsedRow;
