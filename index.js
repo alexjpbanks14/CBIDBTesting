@@ -43,7 +43,7 @@ const restrictionGroupTableInfo = {
   ]
 }
 
-COLUMN_TYPES = {
+const COLUMN_TYPES = {
   NUMBER: {
     SToV: (v) => Number(v)
   },
