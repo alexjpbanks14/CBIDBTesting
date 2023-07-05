@@ -31,18 +31,6 @@ const connection = mysql2.createConnection({
 
 connection.connect();
 
-
-const restrictionGroupTableInfo = {
-  tableName: 'RESTRICTION_GROUPS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
-  pk: 'groupID',
-  columns: [
-    {key: 'groupID', type: COLUMN_TYPES.NUMBER},
-    {key: 'title', type: COLUMN_TYPES.STRING(255)},
-    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER}
-  ]
-}
-
 const COLUMN_TYPES = {
   NUMBER: {
     SToV: (v) => Number(v)
@@ -57,6 +45,17 @@ const COLUMN_TYPES = {
   BOOLEAN: {
     SToV: (v) => Boolean(v)
   }
+}
+
+const restrictionGroupTableInfo = {
+  tableName: 'RESTRICTION_GROUPS',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
+  pk: 'groupID',
+  columns: [
+    {key: 'groupID', type: COLUMN_TYPES.NUMBER},
+    {key: 'title', type: COLUMN_TYPES.STRING(255)},
+    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER}
+  ]
 }
 
 const restrictionTableInfo = {
