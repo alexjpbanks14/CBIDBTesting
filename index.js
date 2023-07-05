@@ -47,6 +47,33 @@ async function getSunsetTime() {
   return lastSunset;
 }
 
+const restrictionGroupColumns = [
+  'groupID',
+  'title',
+  'displayOrder'
+]
+
+function activeRowsStatement(action, columns, body){
+  const activeColumns = columns.filter((a) => body[a] !== undefined);
+  const query = action + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : ''))) +
+  ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')));
+  const values = activeColumns.map((a) => body[a]);
+  connection.query(query, values, (err, res) => {
+    console.log(err);
+    console.log(res);
+  })
+}
+
+app.post('/restrictionGroup', (req, res) => {
+  const body = req.body;
+  activeRowsStatement("INSERT INTO RESTRICTION_GROUPS", restrictionGroupColumns, body);
+})
+
+app.post('/restriction', (req, res) => {
+  const body = req.body;
+  const title = String(body.title);
+})
+
 const flagRegex = /".*"/
 
 app.get('/flag-color', (req, res) => {
@@ -66,7 +93,7 @@ app.get('/fotv', async (req, res) => {
   //const restrictionGroups = await db.collection(restrictionGroupsCol).list();
   //console.log(restrictions.results[0].props);
   res.json({
-    sunset: sunset.toString(),
+    sunset: sunset.toLocaleString('en-US', { timeZone: 'UTC-5' }),
     restrictions: [],//adaptDBToJson(restrictions, restrictionsID), 
     restrictionGroups: [],// adaptDBToJson(restrictionGroups, restrictionGroupsID),
     activeProgramID: 0
