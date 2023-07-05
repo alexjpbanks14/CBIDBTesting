@@ -88,14 +88,14 @@ async function insertRowStatement(table, columns, body){
   const query = "INSERT INTO " + table + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
   ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ')';
   const values = activeColumns.map((a) => body[a]);
-  connection.query(query, values);
+  return await connection.query(query, values);
 }
 
 async function updateRowStatement(table, columns, body, pk){
   const activeColumns = columns.filter((a) => body[a] !== undefined && a != pk);
   const query = "UPDATE " + table + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + pk + ' = ?';
   const values = [...activeColumns, pk].map((a) => body[a]);
-  connection.query(query, values);
+  return await connection.query(query, values);
 }
 
 app.post('/restrictionGroup', async (req, res) => {
