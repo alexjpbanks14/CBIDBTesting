@@ -7,7 +7,6 @@ import fileUpload from 'express-fileupload';
 const app = express()
 const port = 3000
 
-app.use(fileUpload())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -134,19 +133,6 @@ postTable(restrictionTableInfo, '/restriction');
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
 
-app.post('/upload', (req, res) => {
-  // Get the file that was set to our field named "image"
-  const { image } = req.files;
-
-  // If no image submitted, exit
-  if (!image) return res.sendStatus(400);
-
-  // Move the uploaded image to our upload folder
-  image.mv(__dirname + '/upload/' + image.name);
-
-  res.sendStatus(200);
-});
-
 const flagRegex = /".*"/
 
 const replaceRegex = new RegExp('\"', 'g');
@@ -179,6 +165,21 @@ app.get('/fotv', async (req, res, next) => {
   //const restrictions = await db.collection(restrictionsCol).list();
   //const restrictionGroups = await db.collection(restrictionGroupsCol).list();
   //console.log(restrictions.results[0].props);
+});
+
+app.use(fileUpload());
+
+app.post('/upload', (req, res) => {
+  // Get the file that was set to our field named "image"
+  const { image } = req.files;
+
+  // If no image submitted, exit
+  if (!image) return res.sendStatus(400);
+
+  // Move the uploaded image to our upload folder
+  image.mv(__dirname + '/upload/' + image.name);
+
+  res.sendStatus(200);
 });
 
 app.listen(port, () => {
