@@ -35,13 +35,13 @@ const COLUMN_TYPES = {
   NUMBER: {
     SToV: (v) => Number(v)
   },
-  STRING: (l) => {
+  STRING: (l) => ({
     SToV: (v) => {
       if(v.length > l)
         throw new Error("String is too long");
       return String(v);
     }
-  },
+  }),
   BOOLEAN: {
     SToV: (v) => Boolean(v)
   }
