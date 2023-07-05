@@ -171,22 +171,32 @@ app.get('/fotv', async (req, res, next) => {
 });
 
 const ap_image_dir = "/root/ap_image"
+const jp_image_dir = "/root/jp_image"
 
-app.post('/ap_image', upload.single('image'), (req, res, next) => {
-  const image = req.file;
-
-  if (!image) return res.sendStatus(400);
-
-  fs.rename(image.path, ap_image_dir, (err) => {
-    if(err)
-      next(err);
-    else
-      res.sendStatus(200);
+function postImage(path, dir){
+  app.post(path, upload.single('image'), (req, res, next) => {
+    const image = req.file;
+  
+    if (!image) return res.sendStatus(400);
+  
+    fs.rename(image.path, dir, (err) => {
+      if(err)
+        next(err);
+      else
+        res.sendStatus(200);
+    });
   });
-});
+}
+
+postImage('/ap_image', ap_image_dir);
+postImage('/jp_image', jp_image_dir);
 
 app.get('/ap_image', (req, res) => {
   res.sendFile(ap_image_dir);
+});
+
+app.get('/jp_image', (req, res) => {
+  res.sendFile(jp_image_dir);
 });
 
 app.listen(port, () => {
