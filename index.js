@@ -58,10 +58,13 @@ const restrictionGroupColumns = [
 
 function activeRowsStatement(action, columns, body){
   const activeColumns = columns.filter((a) => body[a] !== undefined);
-  const query = action + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : ''))) +
-  ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')));
+  const query = action + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
+  ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '');
   const values = activeColumns.map((a) => body[a]);
+  console.log(query);
   connection.query(query, values, (err, res) => {
+    if(err)
+      throw err;
     console.log(err);
     console.log(res);
   })
