@@ -170,6 +170,7 @@ app.get('/fotv', async (req, res, next) => {
 app.use(fileUpload());
 
 app.post('/upload', (req, res) => {
+  console.log(req);
   // Get the file that was set to our field named "image"
   const { image } = req.files;
 
