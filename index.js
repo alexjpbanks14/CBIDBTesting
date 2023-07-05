@@ -37,10 +37,26 @@ const restrictionGroupTableInfo = {
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
   pk: 'groupID',
   columns: [
-    'groupID',
-    'title',
-    'displayOrder'
+    {key: 'groupID', type: COLUMN_TYPES.NUMBER},
+    {key: 'title', type: COLUMN_TYPES.STRING(255)},
+    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER}
   ]
+}
+
+COLUMN_TYPES = {
+  NUMBER: {
+    SToV: (v) => Number(v)
+  },
+  STRING: (l) => {
+    SToV: (v) => {
+      if(v.length > l)
+        throw new Error("String is too long");
+      return String(v);
+    }
+  },
+  BOOLEAN: {
+    SToV: (v) => Boolean(v)
+  }
 }
 
 const restrictionTableInfo = {
@@ -48,15 +64,15 @@ const restrictionTableInfo = {
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID))',
   pk: 'restrictionID',
   columns: [
-    'restrictionID',
-    'title',
-    'message',
-    'groupID',
-    'active',
-    'textColor',
-    'backgroundColor',
-    'fontWeight',
-    'displayOrder'
+    {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
+    {key: 'title', type: COLUMN_TYPES.STRING(255)},
+    {key: 'message', type: COLUMN_TYPES.STRING(500)},
+    {key: 'groupID', type: COLUMN_TYPES.NUMBER},
+    {key: 'active', type: COLUMN_TYPES.BOOLEAN},
+    {key: 'textColor', type: COLUMN_TYPES.STRING(10)},
+    {key: 'backgroundColor', type: COLUMN_TYPES.STRING(10)},
+    {key: 'textColor', type: COLUMN_TYPES.STRING(30)},
+    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER}
   ]
 }
 
@@ -88,7 +104,7 @@ function getSingleRow(table, columns, pk, id, cb){
 }
 
 function insertRowStatement(tableInfo,body, cb){
-  const activeColumns = tableInfo.columns.filter((a) => body[a] !== undefined);
+  const activeColumns = tableInfo.columns.filter((a) => body[a.key] !== undefined);
   const query = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
   ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
   const values = activeColumns.map((a) => body[a]);
@@ -96,7 +112,7 @@ function insertRowStatement(tableInfo,body, cb){
 }
 
 function updateRowStatement(tableInfo, body, cb){
-  const activeColumns = tableInfo.columns.filter((a) => body[a] !== undefined && a != tableInfo.pk);
+  const activeColumns = tableInfo.columns.filter((a) => body[a.key] !== undefined && a.key != tableInfo.pk);
   const query = "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
   const values = [...activeColumns, tableInfo.pk, tableInfo.pk].map((a) => body[a]);
   connection.query(query, values, cb);
@@ -154,6 +170,14 @@ app.get('/flag-color', (req, res) => {
   })
 });
 
+function parseRow(row, tableInfo){
+  const parsedRow = {};
+  tableInfo.columns.forEach((a) => {
+    parsedRow[a.key] = a.type.SToV(row[a.key]);
+  })
+  return parsedRow;
+}
+
 app.get('/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
   connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';', [], (err, result) => {
@@ -161,8 +185,8 @@ app.get('/fotv', async (req, res, next) => {
       next(err);
     res.json({
       sunset: sunset.toString(),
-      restrictions: result[0],//adaptDBToJson(restrictions, restrictionsID), 
-      restrictionGroups: result[1],// adaptDBToJson(restrictionGroups, restrictionGroupsID),
+      restrictions: result[0].map((a) => parseRow(a, restrictionTableInfo)),//adaptDBToJson(restrictions, restrictionsID), 
+      restrictionGroups: result[1].map((a) => parseRow(a, restrictionGroupTableInfo)),// adaptDBToJson(restrictionGroups, restrictionGroupsID),
       activeProgramID: 0
     }).end();
   });
