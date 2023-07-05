@@ -37,8 +37,6 @@ const COLUMN_TYPES = {
   },
   STRING: (l) => ({
     SToV: (v) => {
-      if(v.length > l)
-        throw new Error("String is too long");
       return String(v);
     }
   }),
