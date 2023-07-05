@@ -135,7 +135,7 @@ deleteTable(restrictionTableInfo, '/restriction');
 
 const flagRegex = /".*"/
 
-const replaceRegex = /\/"\/g/
+const replaceRegex = new RegExp('\"', 'g');
 
 app.get('/flag-color', (req, res) => {
   axios.get('https://api.community-boating.org/api/flag').then((axiosRes) => {
