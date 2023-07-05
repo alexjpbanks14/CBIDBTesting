@@ -7,9 +7,8 @@ import axios from 'axios';
 const app = express()
 const port = 3000
 
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 var allowedOrigins = ['http://localhost:8081',
                       'http://yourapp.com'];
