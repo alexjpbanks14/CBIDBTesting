@@ -19,6 +19,7 @@ app.use(cors({
 }));
 
 const connection = mysql2.createConnection({
+  multipleStatements: true,
   host: 'localhost',
   user: 'root',
   password: 'tokugawa',
@@ -78,39 +79,36 @@ async function getSunsetTime() {
   return lastSunset;
 }
 
-async function getSingleRow(table, columns, pk, id){
-  const result = await connection.query("SELECT * FROM " + table + " WHERE " + pk + " = ?", [id]);
-  return result;
+function getSingleRow(table, columns, pk, id, cb){
+  connection.query("SELECT * FROM " + table + " WHERE " + pk + " = ?", [id], cb);
 }
 
-async function insertRowStatement(table, columns, body){
-  const activeColumns = columns.filter((a) => body[a] !== undefined);
-  const query = "INSERT INTO " + table + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
-  ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ')';
+function insertRowStatement(tableInfo,body, cb){
+  const activeColumns = tableInfo.columns.filter((a) => body[a] !== undefined);
+  const query = "INSERT INTO " + tableInfo.table + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
+  ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.table + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
   const values = activeColumns.map((a) => body[a]);
-  return await connection.query(query, values);
+  connection.query(query, values, cb);
 }
 
-async function updateRowStatement(table, columns, body, pk){
-  const activeColumns = columns.filter((a) => body[a] !== undefined && a != pk);
-  const query = "UPDATE " + table + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + pk + ' = ?';
-  const values = [...activeColumns, pk].map((a) => body[a]);
-  return await connection.query(query, values);
+function updateRowStatement(tableInfo, body, cb){
+  const activeColumns = tableInfo.columns.filter((a) => body[a] !== undefined && a != tableInfo.pk);
+  const query = "UPDATE " + tableInfo.table + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + pk + ' = ?;SELECT * FROM ' + tableInfo.table + ' WHERE ' + tableInfo.pk + ' = ?;';
+  const values = [...activeColumns, tableInfo.pk, tableInfo.pk].map((a) => body[a]);
+  connection.query(query, values, cb);
 }
 
-app.post('/restrictionGroup', async (req, res) => {
+app.post('/restrictionGroup', (req, res) => {
   const body = req.body;
-  const cb = (err, results) => {
+  const cb = (err, result) => {
     if(err)
       throw err;
-    res.json(results).end();
+    res.json(result).end();
   }
   if(body.groupID === undefined){
-    const result = await insertRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body);
-    console.log(result);
+    insertRowStatement(restrictionGroupTableInfo, body, cb);
   }else{
-    const result = await updateRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body, restrictionGroupTableInfo.pk);
-    console.log(result);
+    updateRowStatement(restrictionGroupTableInfo, body, cb);
   }
 })
 
