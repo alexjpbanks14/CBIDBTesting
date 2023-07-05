@@ -27,9 +27,34 @@ const connection = mysql2.createConnection({
 
 connection.connect();
 
+
+const restrictionGroupTableInfo = {
+  tableName: 'RESTRICTION_GROUPS',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
+  pk: 'groupID',
+  columns: [
+    'title',
+    'displayOrder'
+  ]
+}
+
+const restrictionTableInfo = {
+  tableName: 'RESTRICTIONS',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, title varchar(255), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID))',
+  pk: 'restrictionID',
+  columns: [
+    'groupID',
+    'textColor',
+    'backgroundColor',
+    'fontWeight',
+    'title',
+    'displayOrder'
+  ]
+}
+
 function createTables(){
-    connection.query('CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))');
-    connection.query('CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, title varchar(255), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID))');
+    connection.query(restrictionGroupTableInfo.createStatement);
+    connection.query(restrictionTableInfo.createStatement);
 }
 
 createTables();
@@ -49,20 +74,6 @@ async function getSunsetTime() {
   }
   return lastSunset;
 }
-
-const restrictionGroupColumns = [
-  'title',
-  'displayOrder'
-]
-
-const restrictionColumns = [
-  'groupID',
-  'textColor',
-  'backgroundColor',
-  'fontWeight',
-  'title',
-  'displayOrder'
-]
 
 function insertRowStatement(table, columns, body, cb){
   const activeColumns = columns.filter((a) => body[a] !== undefined);
@@ -87,9 +98,9 @@ app.post('/restrictionGroup', (req, res) => {
     res.json(results).end();
   }
   if(body.groupID === undefined){
-    insertRowStatement('RESTRICTION_GROUPS', restrictionGroupColumns, body, cb);
+    insertRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body, cb);
   }else{
-    updateRowStatement('RESTRICTION_GROUPS', restrictionGroupColumns, body, cb)
+    updateRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body, cb, restrictionGroupTableInfo.pk)
   }
 })
 
