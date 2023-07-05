@@ -169,8 +169,6 @@ app.get('/fotv', async (req, res, next) => {
   //console.log(restrictions.results[0].props);
 });
 
-app.use(fileUpload());
-
 app.post('/upload', upload.single('image'), (req, res) => {
   console.log(req.files);
   // Get the file that was set to our field named "image"
