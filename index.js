@@ -115,14 +115,29 @@ function postTable(tableInfo, path){
   })
 }
 
+function deleteTable(tableInfo, path){
+  app.delete(path, (req, res, next) => {
+    const body = req.body;
+    connection.query('DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;', [body[tableInfo.pk]], (err, result) => {
+      if(err)
+        next(err);
+      else
+        res.json({result: 'ok'}).end();
+    })
+  })
+}
+
 postTable(restrictionGroupTableInfo, '/restrictionGroup');
 postTable(restrictionTableInfo, '/restriction');
+
+deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
+deleteTable(restrictionTableInfo, '/restriction');
 
 const flagRegex = /".*"/
 
 app.get('/flag-color', (req, res) => {
   axios.get('https://api.community-boating.org/api/flag').then((axiosRes) => {
-    const flagColor = axiosRes.data.toString().match(flagRegex)[0].replaceAll('\"', '');
+    const flagColor = String(axiosRes.data).match(flagRegex)[0].replaceAll('\"', '');
     res.json({
       flagColor: flagColor
     }).end();
@@ -137,7 +152,7 @@ app.get('/fotv', async (req, res, next) => {
     if(err)
       next(err);
     res.json({
-      sunset: sunset.toLocaleString('en-US', { timeZone: 'UTC' }),
+      sunset: sunset.toString(),
       restrictions: result[0],//adaptDBToJson(restrictions, restrictionsID), 
       restrictionGroups: result[1],// adaptDBToJson(restrictionGroups, restrictionGroupsID),
       activeProgramID: 0
