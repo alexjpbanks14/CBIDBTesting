@@ -33,6 +33,7 @@ const restrictionGroupTableInfo = {
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
   pk: 'groupID',
   columns: [
+    'groupID',
     'title',
     'displayOrder'
   ]
@@ -43,11 +44,13 @@ const restrictionTableInfo = {
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, title varchar(255), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID))',
   pk: 'restrictionID',
   columns: [
+    'restrictionID',
+    'title',
     'groupID',
+    'active',
     'textColor',
     'backgroundColor',
     'fontWeight',
-    'title',
     'displayOrder'
   ]
 }
@@ -75,7 +78,12 @@ async function getSunsetTime() {
   return lastSunset;
 }
 
-function insertRowStatement(table, columns, body, cb){
+async function getSingleRow(table, columns, pk, id){
+  const result = await connection.query("SELECT * FROM " + table + " WHERE " + pk + " = ?", [id]);
+  return result;
+}
+
+async function insertRowStatement(table, columns, body){
   const activeColumns = columns.filter((a) => body[a] !== undefined);
   const query = "INSERT INTO " + table + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
   ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ')';
@@ -83,14 +91,14 @@ function insertRowStatement(table, columns, body, cb){
   connection.query(query, values, cb);
 }
 
-function updateRowStatement(table, columns, body, cb, pk){
-  const activeColumns = columns.filter((a) => body[a] !== undefined);
+async function updateRowStatement(table, columns, body, pk){
+  const activeColumns = columns.filter((a) => body[a] !== undefined && a != pk);
   const query = "UPDATE " + table + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + pk + ' = ?';
   const values = [...activeColumns, pk].map((a) => body[a]);
   connection.query(query, values, cb);
 }
 
-app.post('/restrictionGroup', (req, res) => {
+app.post('/restrictionGroup', async (req, res) => {
   const body = req.body;
   const cb = (err, results) => {
     if(err)
@@ -98,9 +106,11 @@ app.post('/restrictionGroup', (req, res) => {
     res.json(results).end();
   }
   if(body.groupID === undefined){
-    insertRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body, cb);
+    const result = await insertRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body);
+    console.log(result);
   }else{
-    updateRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body, cb, restrictionGroupTableInfo.pk)
+    const result = await updateRowStatement(restrictionGroupTableInfo.tableName, restrictionGroupTableInfo.columns, body, restrictionGroupTableInfo.pk);
+    console.log(result);
   }
 })
 
