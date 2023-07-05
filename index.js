@@ -3,8 +3,9 @@ import mysql2 from 'mysql2';
 import cors from 'cors';
 import axios from 'axios';
 import multer from 'multer';
+import fs from 'fs';
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: '/tmp/uploads/' });
 
 const app = express()
 const port = 3000
@@ -169,18 +170,23 @@ app.get('/fotv', async (req, res, next) => {
   //console.log(restrictions.results[0].props);
 });
 
-app.post('/upload', upload.single('image'), (req, res) => {
-  console.log(req.file);
-  // Get the file that was set to our field named "image"
+const ap_image_dir = "/root/ap_image"
+
+app.post('/ap_image', upload.single('image'), (req, res, next) => {
   const image = req.file;
 
-  // If no image submitted, exit
   if (!image) return res.sendStatus(400);
 
-  // Move the uploaded image to our upload folder
-  image.mv(__dirname + '/upload/' + image.name);
+  fs.rename(image.path, ap_image_dir, (err) => {
+    if(err)
+      next(err);
+    else
+      res.sendStatus(200);
+  });
+});
 
-  res.sendStatus(200);
+app.get('/ap_image', (req, res) => {
+  res.sendFile(ap_image_dir);
 });
 
 app.listen(port, () => {
