@@ -2,7 +2,9 @@ import express from 'express';
 import mysql2 from 'mysql2';
 import cors from 'cors';
 import axios from 'axios';
-import fileUpload from 'express-fileupload';
+import multer from 'multer';
+
+const upload = multer({ dest: 'uploads/' });
 
 const app = express()
 const port = 3000
@@ -169,11 +171,10 @@ app.get('/fotv', async (req, res, next) => {
 
 app.use(fileUpload());
 
-app.post('/upload', (req, res) => {
+app.post('/upload', upload.single('image'), (req, res) => {
   console.log(req.files);
   // Get the file that was set to our field named "image"
-  return res.sendStatus(69);
-  const { image } = req.files;
+  const image = req.files;
 
   // If no image submitted, exit
   if (!image) return res.sendStatus(400);
