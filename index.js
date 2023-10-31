@@ -73,9 +73,22 @@ const restrictionTableInfo = {
   ]
 }
 
+const logoImageTableInfo = {
+  tableName: 'LOGO_IMAGES',
+  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(imageID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, imageType int PRIMARY KEY (imageID))',
+  pk: 'imageID',
+  columns: [
+    {key: 'imageID', type: COLUMN_TYPES.NUMBER},
+    {key: 'title', type: COLUMN_TYPES.STRING(255)},
+    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER},
+    {key: 'imageType', type: COLUMN_TYPES.NUMBER}
+  ]
+}
+
 function createTables(){
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
+    connection.query(logoImageTableInfo.createStatement);
 }
 
 createTables();
@@ -146,9 +159,11 @@ function deleteTable(tableInfo, path){
 
 postTable(restrictionGroupTableInfo, '/restrictionGroup');
 postTable(restrictionTableInfo, '/restriction');
+postTable(logoImageTableInfo, '/logoImage');
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
+deleteTable(logoImageTableInfo, 'logoImage');
 
 const flagRegex = /".*"/
 
@@ -175,13 +190,14 @@ function parseRow(row, tableInfo){
 
 app.get('/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
-  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';', [], (err, result) => {
+  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';', [], (err, result) => {
     if(err)
       next(err);
     res.json({
       sunset: sunset.toString(),
       restrictions: result[0].map((a) => parseRow(a, restrictionTableInfo)),//adaptDBToJson(restrictions, restrictionsID), 
       restrictionGroups: result[1].map((a) => parseRow(a, restrictionGroupTableInfo)),// adaptDBToJson(restrictionGroups, restrictionGroupsID),
+      restrictionGroups: result[2].map((a) => parseRow(a, logoImageTableInfo)),
       activeProgramID: 0
     }).end();
   });
@@ -210,6 +226,32 @@ function postImage(path, dir){
 
 postImage('/ap_image', ap_image_dir);
 postImage('/jp_image', jp_image_dir);
+
+function logoImageDir(image_id){
+  return '/root/logo_images/' + image_id;
+}
+
+app.post('/logo_images/:image_id', upload.single('image'), (req, res, next) => {
+
+  const image_id = parseInt(req.params.image_id);
+
+  if(image_id == NaN || image_id < 0 || image_id > 1000) return res.sendStatus(400);
+
+  const image = req.file;
+
+  if (!image) return res.sendStatus(400);
+
+  fs.rename(image.path, logoImageDir(image_id), (err) => {
+    if(err)
+      next(err);
+    else
+      res.sendStatus(200);
+  });
+});
+
+app.get('/logo_images/:image_id', (req, res) => {
+  res.sendFile(logoImageDir(parseInt(req.params.image_id)));
+})
 
 app.get('/ap_image', (req, res) => {
   res.sendFile(ap_image_dir);
