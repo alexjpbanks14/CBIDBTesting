@@ -109,6 +109,8 @@ async function getSunsetTime() {
   return lastSunset;
 }
 
+console.log("derp");
+
 function getSingleRow(table, columns, pk, id, cb){
   connection.query("SELECT * FROM " + table + " WHERE " + pk + " = ?", [id], cb);
 }
