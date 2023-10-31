@@ -109,8 +109,6 @@ async function getSunsetTime() {
   return lastSunset;
 }
 
-console.log("derp");
-
 function getSingleRow(table, columns, pk, id, cb){
   connection.query("SELECT * FROM " + table + " WHERE " + pk + " = ?", [id], cb);
 }
@@ -199,7 +197,7 @@ app.get('/fotv', async (req, res, next) => {
       sunset: sunset.toString(),
       restrictions: result[0].map((a) => parseRow(a, restrictionTableInfo)),//adaptDBToJson(restrictions, restrictionsID), 
       restrictionGroups: result[1].map((a) => parseRow(a, restrictionGroupTableInfo)),// adaptDBToJson(restrictionGroups, restrictionGroupsID),
-      restrictionGroups: result[2].map((a) => parseRow(a, logoImageTableInfo)),
+      logoImages: result[2].map((a) => parseRow(a, logoImageTableInfo)),
       activeProgramID: 0
     }).end();
   });
@@ -233,7 +231,7 @@ function logoImageDir(image_id){
   return '/root/logo_images/' + image_id;
 }
 
-app.post('/logo_images/:image_id', upload.single('image'), (req, res, next) => {
+app.post('/logoImages/:image_id', upload.single('image'), (req, res, next) => {
 
   const image_id = parseInt(req.params.image_id);
 
@@ -251,7 +249,7 @@ app.post('/logo_images/:image_id', upload.single('image'), (req, res, next) => {
   });
 });
 
-app.get('/logo_images/:image_id', (req, res) => {
+app.get('/logoImages/:image_id', (req, res) => {
   res.sendFile(logoImageDir(parseInt(req.params.image_id)));
 })
 
