@@ -231,7 +231,7 @@ function logoImageDir(image_id){
   return '/root/logoImages/image' + toString(image_id) + '.img';
 }
 
-app.post('/uploadLogoImage', upload.single('image'), (req, res, next) => {
+app.post('/uploadLogoImage/:image_id', upload.single('image'), (req, res, next) => {
 
   const image_id = parseInt(req.params.image_id);
 
