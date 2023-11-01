@@ -227,7 +227,7 @@ function postImage(path, dir){
 postImage('/ap_image', ap_image_dir);
 postImage('/jp_image', jp_image_dir);
 
-fs.mkdir('/root/logoImages')
+fs.mkdir('/root/logoImages', () => {})
 
 function logoImageDir(image_id){
   return '/root/logoImages/image' + image_id + '.img';
