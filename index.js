@@ -228,7 +228,7 @@ postImage('/ap_image', ap_image_dir);
 postImage('/jp_image', jp_image_dir);
 
 function logoImageDir(image_id){
-  return '/root/logo_images/image_';
+  return '/root/logo_images/image_' + image_id;
 }
 
 app.post('/logoImages/:image_id', upload.single('image'), (req, res, next) => {
@@ -249,7 +249,7 @@ app.post('/logoImages/:image_id', upload.single('image'), (req, res, next) => {
   });
 });
 
-app.get('/logoImages/:image_id', (req, res) => {
+app.get('/logoImages/:image_id', upload.single('image'), (req, res) => {
   res.sendFile(logoImageDir(parseInt(req.params.image_id)));
 })
 
