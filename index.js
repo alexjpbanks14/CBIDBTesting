@@ -228,7 +228,7 @@ postImage('/ap_image', ap_image_dir);
 postImage('/jp_image', jp_image_dir);
 
 function logoImageDir(image_id){
-  return '/root/logoImages/image' + image_id;
+  return '/root/logoImages/image' + toString(image_id) + '.img';
 }
 
 app.post('/uploadLogoImage', upload.single('image'), (req, res, next) => {
