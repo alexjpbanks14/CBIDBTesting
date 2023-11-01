@@ -75,13 +75,14 @@ const restrictionTableInfo = {
 
 const logoImageTableInfo = {
   tableName: 'LOGO_IMAGES',
-  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(imageID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, imageType int, PRIMARY KEY (imageID))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(imageID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, imageType int, imageVersion int PRIMARY KEY (imageID))',
   pk: 'imageID',
   columns: [
     {key: 'imageID', type: COLUMN_TYPES.NUMBER},
     {key: 'title', type: COLUMN_TYPES.STRING(255)},
     {key: 'displayOrder', type: COLUMN_TYPES.NUMBER},
-    {key: 'imageType', type: COLUMN_TYPES.NUMBER}
+    {key: 'imageType', type: COLUMN_TYPES.NUMBER},
+    {key: 'imageVersion', type: COLUMN_TYPES.NUMBER},
   ]
 }
 
@@ -251,8 +252,7 @@ app.post('/uploadLogoImage/:imageId', upload.single('image'), (req, res, next) =
   });
 });
 
-app.get('/logoImages/:image_id', (req, res) => {
-  res.set('Cache-control', 'no-store');
+app.get('/logoImages/:image_id/:image_version', (req, res) => {
   res.sendFile(logoImageDir(parseInt(req.params.image_id)));
 })
 
