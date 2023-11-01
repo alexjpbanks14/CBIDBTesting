@@ -237,7 +237,7 @@ app.post('/logoImages/:image_id', upload.single('image'), (req, res, next) => {
 
   if(image_id == NaN || image_id < 0 || image_id > 1000) return res.sendStatus(400);
 
-  const image = req.files[0];
+  const image = req.file;
 
   if (!image) return res.sendStatus(400);
 
