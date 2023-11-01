@@ -228,12 +228,12 @@ postImage('/ap_image', ap_image_dir);
 postImage('/jp_image', jp_image_dir);
 
 function logoImageDir(image_id){
-  return '/root/logoImages/image' + toString(image_id) + '.img';
+  return '/root/logoImages/image' + image_id + '.img';
 }
 
-app.post('/uploadLogoImage/:image_id', upload.single('image'), (req, res, next) => {
+app.post('/uploadLogoImage/:imageId', upload.single('image'), (req, res, next) => {
 
-  const image_id = parseInt(req.params.image_id);
+  const image_id = parseInt(req.params.imageId);
 
   if(image_id == NaN || image_id < 0 || image_id > 1000) return res.sendStatus(400);
 
