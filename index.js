@@ -237,7 +237,7 @@ function logoImageDir(image_id){
 app.post('/uploadLogoImage/:imageId', upload.single('image'), (req, res, next) => {
   const image_id = parseInt(req.params.imageId);
 
-  if(image_id == NaN || image_id < 0 || image_id > 1000) return res.sendStatus(400);
+  if(image_id == NaN || image_id < 0) return res.sendStatus(400);
 
   const image = req.file;
 
