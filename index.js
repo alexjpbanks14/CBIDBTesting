@@ -164,7 +164,7 @@ postTable(logoImageTableInfo, '/logoImage');
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
-deleteTable(logoImageTableInfo, 'logoImage');
+deleteTable(logoImageTableInfo, '/logoImage');
 
 const flagRegex = /".*"/
 
