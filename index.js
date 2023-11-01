@@ -252,6 +252,7 @@ app.post('/uploadLogoImage/:imageId', upload.single('image'), (req, res, next) =
 });
 
 app.get('/logoImages/:image_id', (req, res) => {
+  res.set('Cache-control', 'no-store');
   res.sendFile(logoImageDir(parseInt(req.params.image_id)));
 })
 
