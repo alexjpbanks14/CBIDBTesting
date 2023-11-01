@@ -75,7 +75,7 @@ const restrictionTableInfo = {
 
 const logoImageTableInfo = {
   tableName: 'LOGO_IMAGES',
-  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(imageID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, imageType int, imageVersion int PRIMARY KEY (imageID))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(imageID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (imageID))',
   pk: 'imageID',
   columns: [
     {key: 'imageID', type: COLUMN_TYPES.NUMBER},
