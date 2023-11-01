@@ -227,12 +227,13 @@ function postImage(path, dir){
 postImage('/ap_image', ap_image_dir);
 postImage('/jp_image', jp_image_dir);
 
+fs.mkdir('/root/logoImages')
+
 function logoImageDir(image_id){
   return '/root/logoImages/image' + image_id + '.img';
 }
 
 app.post('/uploadLogoImage/:imageId', upload.single('image'), (req, res, next) => {
-
   const image_id = parseInt(req.params.imageId);
 
   if(image_id == NaN || image_id < 0 || image_id > 1000) return res.sendStatus(400);
