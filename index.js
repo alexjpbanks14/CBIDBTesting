@@ -87,7 +87,6 @@ const logoImageTableInfo = {
 }
 
 function createTables(){
-  connection.query("DROP TABLE IF EXISTS LOGO_IMAGES");
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
     connection.query(logoImageTableInfo.createStatement);
