@@ -116,7 +116,7 @@ function getSingleRow(table, columns, pk, id, cb){
 
 function insertRowStatement(tableInfo,body,cb){
   var values = [];
-  const query =body.map(bn => {
+  const query= body.map(bn => {
     const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
     const query = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
     ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
@@ -129,8 +129,8 @@ function insertRowStatement(tableInfo,body,cb){
 function updateRowStatement(tableInfo, body, cb){
   var values = [];
   const query = body.map(bn => {
-    const activeColumns = tableInfo.columns.filter((a) => body[a.key] !== undefined && a.key != tableInfo.pk).map((a) => a.key);
-    values.push([...activeColumns, tableInfo.pk, tableInfo.pk].map((a) => body[a]));  
+    const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined && a.key != tableInfo.pk).map((a) => a.key);
+    values.push([...activeColumns, tableInfo.pk, tableInfo.pk].map((a) => bn[a]));  
     return "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
   }).reduce((a, b) => a + b, '');
   console.log(query);
