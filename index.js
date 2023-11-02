@@ -119,7 +119,7 @@ function updateRowsStatement(tableInfo,body,cb){
   const query= body.map(bn => {
     const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined && a.key != tableInfo.pk).map((a) => a.key);
     values = values.concat(activeColumns.map((a) => bn[a]));
-    if(bn[tableInfo.pk]){
+    if(bn[tableInfo.pk] == undefined){
       const query = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
       ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
       return query;
