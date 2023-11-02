@@ -133,7 +133,6 @@ function updateRowsStatement(tableInfo,body,cb){
 function postTable(tableInfo, path){
   app.post(path, (req, res, next) => {
     const body = req.body;
-
     const cb = (err, result, ) => {
       console.log(result);
       if(err)
