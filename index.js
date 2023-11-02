@@ -114,18 +114,27 @@ function getSingleRow(table, columns, pk, id, cb){
   connection.query("SELECT * FROM " + table + " WHERE " + pk + " = ?", [id], cb);
 }
 
-function insertRowStatement(tableInfo,body, cb){
-  const activeColumns = tableInfo.columns.filter((a) => body[a.key] !== undefined).map((a) => a.key);
-  const query = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
-  ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
-  const values = activeColumns.map((a) => body[a]);
+function insertRowStatement(tableInfo,body,cb){
+  var values = [];
+  const query =body.map(bn => {
+    const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
+    const query = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
+    ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
+    values.push(activeColumns.map((a) => bn[a]));
+    return query;
+  }).reduce((a, b) => a + b, '');
   connection.query(query, values, cb);
 }
 
 function updateRowStatement(tableInfo, body, cb){
-  const activeColumns = tableInfo.columns.filter((a) => body[a.key] !== undefined && a.key != tableInfo.pk).map((a) => a.key);
-  const query = "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
-  const values = [...activeColumns, tableInfo.pk, tableInfo.pk].map((a) => body[a]);
+  var values = [];
+  const query = body.map(bn => {
+    values.push([...activeColumns, tableInfo.pk, tableInfo.pk].map((a) => body[a]));  
+    const activeColumns = tableInfo.columns.filter((a) => body[a.key] !== undefined && a.key != tableInfo.pk).map((a) => a.key);
+    return "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
+  }).reduce((a, b) => a + b, '');
+  console.log(query);
+  console.log(values);
   connection.query(query, values, cb);
 }
 
@@ -133,16 +142,14 @@ function postTable(tableInfo, path){
   app.post(path, (req, res, next) => {
     const body = req.body;
     const cb = (err, result) => {
+      console.log(result);
       if(err)
         next(err);
       else
         res.json(parseRow(result[1][0], tableInfo)).end();
     }
-    if(body[tableInfo.pk] === undefined){
-      insertRowStatement(tableInfo, body, cb);
-    }else{
-      updateRowStatement(tableInfo, body, cb);
-    }
+    insertRowStatement(tableInfo, body.filter((a) => a[tableInfo.pk] === undefined), cb);
+    updateRowStatement(tableInfo, body.filter((a) => a[tableInfo.pk] !== undefined), cb);
   })
 }
 
