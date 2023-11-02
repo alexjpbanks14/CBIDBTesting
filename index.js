@@ -124,6 +124,7 @@ function updateRowsStatement(tableInfo,body,cb){
       ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
       return query;
     }else{
+      values = values.concat([bn[tableInfo.pk], bn[tableInfo.pk]]);
       return "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
     }
   }).reduce((a, b) => a + b, '');
@@ -135,7 +136,8 @@ function updateRowsStatement(tableInfo,body,cb){
 function postTable(tableInfo, path){
   app.post(path, (req, res, next) => {
     const body = req.body;
-    const cb = (err, result, ) => {
+
+    const cb = (err, result) => {
       console.log(result);
       if(err)
         next(err);
