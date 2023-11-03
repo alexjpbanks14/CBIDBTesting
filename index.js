@@ -137,6 +137,7 @@ function postTable(tableInfo, path){
 
     const cb = (err, result) => {
       console.log(result);
+      result.filter((a, i) => i % 2 == 0).map((a) => console.log(a))
       if(err)
         next(err);
       else
