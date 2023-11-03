@@ -128,8 +128,6 @@ function updateRowsStatement(tableInfo,body,cb){
       return "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
     }
   }).reduce((a, b) => a + b, '');
-  console.log(query);
-  console.log(values);
   connection.query(query, values, cb);
 }
 
@@ -142,7 +140,7 @@ function postTable(tableInfo, path){
       if(err)
         next(err);
       else
-        res.json(result[1].map((a) => parseRow(a, tableInfo))).end();
+        res.json(result.filter((a, i) => i % 2 == 0).map((a) => parseRow(a[0], tableInfo))).end();
     }
     updateRowsStatement(tableInfo, body, cb);
   })
