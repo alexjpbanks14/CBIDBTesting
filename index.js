@@ -136,12 +136,10 @@ function postTable(tableInfo, path){
     const body = req.body;
 
     const cb = (err, result) => {
-      console.log(result);
-      result.filter((a, i) => i % 2 == 0).map((a) => console.log(a))
       if(err)
         next(err);
       else
-        res.json(result.filter((a, i) => i % 2 == 0).map((a) => parseRow(a[0], tableInfo))).end();
+        res.json(result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo))).end();
     }
     updateRowsStatement(tableInfo, body, cb);
   })
