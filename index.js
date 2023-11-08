@@ -128,6 +128,7 @@ function updateRowsStatement(tableInfo,body,cb){
       return "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
     }
   }).reduce((a, b) => a + b, '');
+  console.log(query);
   connection.query(query, values, cb);
 }
 
