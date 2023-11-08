@@ -136,6 +136,7 @@ function postTable(tableInfo, path){
     const body = req.body;
 
     const cb = (err, result) => {
+      console.log(results);
       if(err)
         next(err);
       else
