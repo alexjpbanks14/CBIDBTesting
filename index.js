@@ -129,6 +129,7 @@ function updateRowsStatement(tableInfo,body,cb){
     }
   }).reduce((a, b) => a + b, '');
   console.log(query);
+  console.log(values);
   connection.query(query, values, cb);
 }
 
