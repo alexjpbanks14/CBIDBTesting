@@ -181,6 +181,7 @@ app.get('/flag-color', (req, res) => {
 });
 
 function parseRow(row, tableInfo){
+  console.log(row);
   const parsedRow = {};
   tableInfo.columns.forEach((a) => {
     parsedRow[a.key] = a.type.SToV(row[a.key]);
