@@ -43,6 +43,11 @@ const COLUMN_TYPES = {
       return String(v);
     }
   }),
+  STRING_NULL: (l) => ({
+    SToV: (v) => {
+      return v == null ? null : String(v);
+    }
+  }),
   BOOLEAN: {
     SToV: (v) => Boolean(v)
   }
@@ -113,9 +118,9 @@ const restrictionConditionTableInfo = {
   columns: [
     {key: 'conditionID', type: COLUMN_TYPES.NUMBER},
     {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
-    {key: 'conditionAction', type: COLUMN_TYPES.NUMBER},
-    {key: 'conditionType', type: COLUMN_TYPES.NUMBER},
-    {key: 'conditionInfo', type: COLUMN_TYPES.STRING(2000)}
+    {key: 'conditionAction', type: COLUMN_TYPES.NUMBER_NULL},
+    {key: 'conditionType', type: COLUMN_TYPES.NUMBER_NULL},
+    {key: 'conditionInfo', type: COLUMN_TYPES.STRING_NULL(2000)}
   ]
 }
 
