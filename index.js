@@ -89,10 +89,11 @@ const logoImageTableInfo = {
 
 const imageTableInfo = {
   tableName: 'IMAGES',
-  createStatement: 'CREATE TABLE IF NOT EXISTS IMAGES(imageID int NOT NULL AUTO_INCREMENT, version int, PRIMARY KEY (imageID))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS IMAGES(imageID int NOT NULL AUTO_INCREMENT, imageSuffix varchar(20), version int, PRIMARY KEY (imageID))',
   pk: 'imageID',
   columns: [
     {key: 'imageID', type: COLUMN_TYPES.NUMBER},
+    {key: 'imageSuffix', type: COLUMN_TYPES.STRING(20)},
     {key: 'version', type: COLUMN_TYPES.NUMBER}
   ]
 }
@@ -268,26 +269,33 @@ postImage('/jp_image', jp_image_dir);
 
 fs.mkdir('/root/logoImages', () => {})
 
-function logoImageDir(image_id){
-  return '/root/logoImages/image' + image_id + '.svg';
+function logoImageDir(image_id, image_suffix){
+  return '/root/logoImages/image' + image_id + '.' + image_suffix;
 }
 
-app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
+const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
+
+app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res, next) => {
   const image = req.file;
 
   if (!image) return res.sendStatus(400);
 
+  const suffix = req.params.imageSuffix;
+
+  if(validSuffixes.findIndex((a) => a == suffix) == -1)
+    return res.sendStatus(400);
+
   const image_id_params = parseInt(req.params.imageId);
 
   const uploadImage = (image_id, image_new, isNew) => {
-    fs.rename(image.path, logoImageDir(image_id), (err) => {
+    fs.rename(image.path, logoImageDir(image_id, suffix), (err) => {
       if(err){
         next(err);
       }else{
         if(isNew){
           res.json(image_new[0]).end();
         }else {
-          connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1 WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [image_id, image_id], (err2, results) => {
+          connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1, imageSuffix = ? WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [imageSuffix, image_id, image_id], (err2, results) => {
             console.log(results);
             console.log(parseResult(results, imageTableInfo));
             if(err2)
@@ -301,7 +309,7 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
   }
 
   if(isNaN(image_id_params) || image_id_params < 0){
-    updateRowsStatement(imageTableInfo, [{version: 0}], (err, results) => {
+    updateRowsStatement(imageTableInfo, [{version: 0, imageSuffix: suffix}], (err, results) => {
       if(err){
         next(err)
       }
@@ -317,7 +325,17 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
 });
 
 app.get('/images/:image_id/:image_version', (req, res) => {
-  res.sendFile(logoImageDir(parseInt(req.params.image_id)));
+  const imageID = parseInt(req.params.image_id);
+  connection.query('SELECT imageSuffix FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?', [imageID], (err, results) => {
+    if(err){
+      next(err)
+    }else{
+      console.log(results);
+      if(results[0].length == 0)
+        res.sendStatus(404);
+      res.sendFile(logoImageDir(imageID, results[0][0]));
+    }
+  })
 })
 
 app.get('/ap_image', (req, res) => {
