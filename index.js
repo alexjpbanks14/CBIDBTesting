@@ -162,7 +162,7 @@ function updateRowsStatement(tableInfo,body,cb){
   connection.query(query, values, cb);
 }
 
-function parseResult(result) {
+function parseResult(result, tableInfo) {
   return result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo))
 }
 
@@ -174,7 +174,7 @@ function postTable(tableInfo, path){
       if(err)
         next(err);
       else
-        res.json(parseResult(result)).end();
+        res.json(parseResult(result, tableInfo)).end();
     }
     updateRowsStatement(tableInfo, body, cb);
   })
@@ -292,7 +292,7 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
             if(err2)
               next(err2)
             else
-              res.json(parseResult(results)).end();
+              res.json(parseResult(results, imageTableInfo)).end();
           })
         }
       }
@@ -304,7 +304,7 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
       if(err)
         next(err)
       else
-        uploadImage(parseResult(results), true);
+        uploadImage(parseResult(results, imageTableInfo), true);
     });
   }else{
     uploadImage(image_id_params, false);
