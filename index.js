@@ -104,7 +104,7 @@ const imageTableInfo = {
 
 const restrictionConditionTableInfo = {
   tableName: 'RESTRICTION_CONDITIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITIONS(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTION(restrictionID))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITIONS(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTIONS(restrictionID))',
   pk: 'conditionID',
   columns: [
     {key: 'conditionID', type: COLUMN_TYPES.NUMBER},
