@@ -113,7 +113,7 @@ const imageTableInfo = {
 
 const restrictionConditionTableInfo = {
   tableName: 'RESTRICTION_CONDITIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITIONS(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTIONS(restrictionID))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITIONS(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTIONS(restrictionID) ON DELETE CASCADE)',
   pk: 'conditionID',
   columns: [
     {key: 'conditionID', type: COLUMN_TYPES.NUMBER},
@@ -178,7 +178,6 @@ function parseResult(result, tableInfo) {
 function postTable(tableInfo, path){
   app.post(path, (req, res, next) => {
     const body = req.body;
-
     const cb = (err, result) => {
       if(err)
         next(err);
