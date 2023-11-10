@@ -305,6 +305,7 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
       }
       else{
         const res = parseResult(results, imageTableInfo);
+        console.log(res[0]);
         uploadImage(res[0].imageID, res, true);
       }
     });
