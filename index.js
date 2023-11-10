@@ -191,8 +191,14 @@ function postTable(tableInfo, path){
 
 function deleteTable(tableInfo, path){
   app.delete(path, (req, res, next) => {
-    const body = req.body;
-    connection.query('DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;', [body[tableInfo.pk]], (err, result) => {
+    const body = Array.isArray(req.body) ? req.body : [req.body];
+    var query = '';
+    var values = [];
+    body.forEach((a) => {
+      query = query + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;'
+      values.push(a[tableInfo.pk]);
+    })
+    connection.query(query, values, (err, result) => {
       if(err)
         next(err);
       else
