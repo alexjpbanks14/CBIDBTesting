@@ -120,7 +120,7 @@ function createTables(){
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
     connection.query(logoImageTableInfo.createStatement);
-    connection.query(restrictionConditionTableInfo);
+    connection.query(restrictionConditionTableInfo.createStatement);
 }
 
 createTables();
