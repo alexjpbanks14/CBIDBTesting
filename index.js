@@ -162,6 +162,10 @@ function updateRowsStatement(tableInfo,body,cb){
   connection.query(query, values, cb);
 }
 
+function parseResult(result) {
+  return result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo))
+}
+
 function postTable(tableInfo, path){
   app.post(path, (req, res, next) => {
     const body = req.body;
@@ -170,7 +174,7 @@ function postTable(tableInfo, path){
       if(err)
         next(err);
       else
-        res.json(result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo))).end();
+        res.json(parseResult(result)).end();
     }
     updateRowsStatement(tableInfo, body, cb);
   })
@@ -269,24 +273,42 @@ function logoImageDir(image_id){
 }
 
 app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
-  const image_id = parseInt(req.params.imageId);
-  console.log(image_id);
-  if(isNaN(image_id) || image_id < 0){
-    connection.query(('INSERT INTO ' + imageTableInfo.tableName + '(version) VALUES (0);'), (err, results) => {
-      console.log(results);
-    })
-  }
-
   const image = req.file;
 
   if (!image) return res.sendStatus(400);
 
-  fs.rename(image.path, logoImageDir(image_id), (err) => {
-    if(err)
-      next(err);
-    else
-      res.sendStatus(200);
-  });
+  const image_id_params = parseInt(req.params.imageId);
+
+  const uploadImage = (image, isNew) => {
+    const image_id = isNew ? image.imageID : image;
+    fs.rename(image.path, logoImageDir(image_id), (err) => {
+      if(err){
+        next(err);
+      }else{
+        if(isNew){
+          res.json(image).end();
+        }else {
+          connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1 WHERE imageID = ?,SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [image_id, image_id], (err2, results) => {
+            if(err2)
+              next(err2)
+            else
+              res.json(parseResult(results)).end();
+          })
+        }
+      }
+    });
+  }
+
+  if(isNaN(image_id_params) || image_id_params < 0){
+    updateRowsStatement(imageTableInfo, [{version: 0}], (err, results) => {
+      if(err)
+        next(err)
+      else
+        uploadImage(parseResult(results), true);
+    });
+  }else{
+    uploadImage(image_id_params, false);
+  }
 });
 
 app.get('/images/:image_id/:image_version', (req, res) => {
