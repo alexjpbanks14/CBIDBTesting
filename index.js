@@ -331,9 +331,9 @@ app.get('/images/:image_id/:image_version', (req, res) => {
       next(err)
     }else{
       console.log(results);
-      if(results[0].length == 0)
+      if(results.length == 0)
         res.sendStatus(404);
-      res.sendFile(logoImageDir(imageID, results[0][0]));
+      res.sendFile(logoImageDir(imageID, results[0].imageSuffix));
     }
   })
 })
