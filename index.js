@@ -187,6 +187,8 @@ function postTable(tableInfo, path){
 function deleteTable(tableInfo, path){
   app.delete(path, (req, res, next) => {
     const body = req.body;
+    console.log('DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;');
+    console.log([body[tableInfo.pk]]);
     connection.query('DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;', [body[tableInfo.pk]], (err, result) => {
       console.log(result);
       console.log(err);
