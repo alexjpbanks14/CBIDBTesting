@@ -188,6 +188,8 @@ function deleteTable(tableInfo, path){
   app.delete(path, (req, res, next) => {
     const body = req.body;
     connection.query('DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;', [body[tableInfo.pk]], (err, result) => {
+      console.log(result);
+      console.log(err);
       if(err)
         next(err);
       else
