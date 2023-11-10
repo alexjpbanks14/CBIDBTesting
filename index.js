@@ -291,7 +291,7 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
             if(err2)
               next(err2)
             else
-              res.json(parseResult(results, imageTableInfo)[0]).end();
+              res.json(parseResult(results, imageTableInfo)).end();
           })
         }
       }
