@@ -199,10 +199,12 @@ function deleteTable(tableInfo, path){
 postTable(restrictionGroupTableInfo, '/restrictionGroup');
 postTable(restrictionTableInfo, '/restriction');
 postTable(logoImageTableInfo, '/logoImage');
+postTable(restrictionConditionTableInfo, '/restrictionCondition');
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
 deleteTable(logoImageTableInfo, '/logoImage');
+deleteTable(restrictionConditionTableInfo, '/restrictionCondition');
 
 const flagRegex = /".*"/
 
