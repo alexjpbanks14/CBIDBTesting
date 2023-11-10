@@ -58,10 +58,11 @@ const restrictionGroupTableInfo = {
 
 const restrictionTableInfo = {
   tableName: 'RESTRICTIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGE(imageID) ON DELETE CASCADE)',
   pk: 'restrictionID',
   columns: [
     {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
+    {key: 'imageID', type: COLUMN_TYPES.NUMBER},
     {key: 'title', type: COLUMN_TYPES.STRING(255)},
     {key: 'message', type: COLUMN_TYPES.STRING(500)},
     {key: 'groupID', type: COLUMN_TYPES.NUMBER},
@@ -75,21 +76,51 @@ const restrictionTableInfo = {
 
 const logoImageTableInfo = {
   tableName: 'LOGO_IMAGES',
-  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(imageID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (imageID))',
-  pk: 'imageID',
+  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(logoImageID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (logoImageID), FOREIGN KEY(imageID) REFERENCES IMAGE(imageID) ON DELETE CASCADE)',
+  pk: 'logoImageID',
   columns: [
+    {key: 'logoImageID', type: COLUMN_TYPES.NUMBER},
     {key: 'imageID', type: COLUMN_TYPES.NUMBER},
     {key: 'title', type: COLUMN_TYPES.STRING(255)},
     {key: 'displayOrder', type: COLUMN_TYPES.NUMBER},
     {key: 'imageType', type: COLUMN_TYPES.NUMBER},
-    {key: 'imageVersion', type: COLUMN_TYPES.NUMBER},
+  ]
+}
+
+const imageTableInfo = {
+  tableName: 'IMAGE',
+  createStatement: 'CREATE TABLE IF NOT EXISTS IMAGES(imageID int NOT NULL AUTO_INCREMENT, version int, PRIMARY KEY (imageID))',
+  pk: 'imageID',
+  columns: [
+    {key: 'imageID', type: COLUMN_TYPES.NUMBER},
+    {key: 'version', type: COLUMN_TYPES.NUMBER}
+  ]
+}
+
+//Action: Enable, Disable, Toggle
+//Type: Time, State
+//Info
+//
+
+const restrictionConditionTableInfo = {
+  tableName: 'RESTRICTION_CONDITION',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITION(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTION(restrictionID))',
+  pk: 'conditionID',
+  columns: [
+    {key: 'conditionID', type: COLUMN_TYPES.NUMBER},
+    {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
+    {key: 'conditionAction', type: COLUMN_TYPES.NUMBER},
+    {key: 'conditionType', type: COLUMN_TYPES.NUMBER},
+    {key: 'conditionInfo', type: COLUMN_TYPES.STRING(2000)}
   ]
 }
 
 function createTables(){
+    connection.query(imageTableInfo.createStatement);
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
     connection.query(logoImageTableInfo.createStatement);
+    connection.query(restrictionConditionTableInfo);
 }
 
 createTables();
@@ -192,7 +223,7 @@ function parseRow(row, tableInfo){
 
 app.get('/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
-  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';', [], (err, result) => {
+  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';', [], (err, result) => {
     if(err)
       next(err);
     res.json({
@@ -200,6 +231,8 @@ app.get('/fotv', async (req, res, next) => {
       restrictions: result[0].map((a) => parseRow(a, restrictionTableInfo)),//adaptDBToJson(restrictions, restrictionsID), 
       restrictionGroups: result[1].map((a) => parseRow(a, restrictionGroupTableInfo)),// adaptDBToJson(restrictionGroups, restrictionGroupsID),
       logoImages: result[2].map((a) => parseRow(a, logoImageTableInfo)),
+      images: results[3].map((a) => parseRow(a, imageTableInfo)),
+      restrictionConditions: results[4].map((a) => parseRow(a, restrictionConditionTableInfo)),
       activeProgramID: 0
     }).end();
   });
@@ -235,10 +268,13 @@ function logoImageDir(image_id){
   return '/root/logoImages/image' + image_id + '.img';
 }
 
-app.post('/uploadLogoImage/:imageId', upload.single('image'), (req, res, next) => {
+app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
   const image_id = parseInt(req.params.imageId);
-
-  if(image_id == NaN || image_id < 0) return res.sendStatus(400);
+  if(image_id == NaN || image_id < 0){
+    connection.query(('INSERT INTO IMAGE(version) VALUES (0);'), (err, results) => {
+      console.log(results);
+    })
+  }
 
   const image = req.file;
 
@@ -252,7 +288,7 @@ app.post('/uploadLogoImage/:imageId', upload.single('image'), (req, res, next) =
   });
 });
 
-app.get('/logoImages/:image_id/:image_version', (req, res) => {
+app.get('/images/:image_id/:image_version', (req, res) => {
   res.sendFile(logoImageDir(parseInt(req.params.image_id)));
 })
 
