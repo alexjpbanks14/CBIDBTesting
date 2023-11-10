@@ -289,6 +289,7 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
         }else {
           connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1 WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [image_id, image_id], (err2, results) => {
             console.log(results);
+            console.log(parseResult(results, imageTableInfo));
             if(err2)
               next(err2)
             else
