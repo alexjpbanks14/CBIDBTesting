@@ -330,6 +330,8 @@ app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res
 
 app.get('/images/:image_id/:image_version', (req, res, next) => {
   const imageID = parseInt(req.params.image_id);
+  if(isNaN(imageID))
+    return res.sendStatus(404);
   connection.query('SELECT imageSuffix FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?', [imageID], (err, results) => {
     if(err){
       next(err)
