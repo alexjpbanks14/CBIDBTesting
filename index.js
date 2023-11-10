@@ -279,19 +279,13 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
 
   const image_id_params = parseInt(req.params.imageId);
 
-  const uploadImage = (image, isNew) => {
-    const image_id = isNew ? image[0].imageID : image;
-    console.log(image);
-    console.log(isNew);
-    console.log(image[0]);
-    console.log(image[0][imageTableInfo.pk]);
-    console.log(image_id);
+  const uploadImage = (image_id, image_new, isNew) => {
     fs.rename(image.path, logoImageDir(image_id), (err) => {
       if(err){
         next(err);
       }else{
         if(isNew){
-          res.json(image).end();
+          res.json(image_new).end();
         }else {
           connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1 WHERE imageID = ?,SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [image_id, image_id], (err2, results) => {
             if(err2)
@@ -306,13 +300,16 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
 
   if(isNaN(image_id_params) || image_id_params < 0){
     updateRowsStatement(imageTableInfo, [{version: 0}], (err, results) => {
-      if(err)
+      if(err){
         next(err)
-      else
-        uploadImage(parseResult(results, imageTableInfo), true);
+      }
+      else{
+        const res = parseResult(results, imageTableInfo);
+        uploadImage(res[0].imageID, res, true);
+      }
     });
   }else{
-    uploadImage(image_id_params, false);
+    uploadImage(image_id_params, undefined, false);
   }
 });
 
