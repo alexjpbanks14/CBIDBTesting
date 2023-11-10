@@ -271,7 +271,7 @@ function logoImageDir(image_id){
 app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
   const image_id = parseInt(req.params.imageId);
   console.log(image_id);
-  if(image_id == NaN || image_id < 0){
+  if(isNaN(image_id) || image_id < 0){
     connection.query(('INSERT INTO ' + imageTableInfo.tableName + '(version) VALUES (0);'), (err, results) => {
       console.log(results);
     })
