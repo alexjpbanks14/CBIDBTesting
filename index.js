@@ -295,7 +295,7 @@ app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res
         if(isNew){
           res.json(image_new[0]).end();
         }else {
-          connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1, imageSuffix = ? WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [imageSuffix, image_id, image_id], (err2, results) => {
+          connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1, imageSuffix = ? WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [suffix, image_id, image_id], (err2, results) => {
             console.log(results);
             console.log(parseResult(results, imageTableInfo));
             if(err2)
