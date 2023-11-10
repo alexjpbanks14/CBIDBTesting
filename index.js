@@ -58,7 +58,7 @@ const restrictionGroupTableInfo = {
 
 const restrictionTableInfo = {
   tableName: 'RESTRICTIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGE(imageID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
   pk: 'restrictionID',
   columns: [
     {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
@@ -76,7 +76,7 @@ const restrictionTableInfo = {
 
 const logoImageTableInfo = {
   tableName: 'LOGO_IMAGES',
-  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(logoImageID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (logoImageID), FOREIGN KEY(imageID) REFERENCES IMAGE(imageID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(logoImageID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (logoImageID), FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
   pk: 'logoImageID',
   columns: [
     {key: 'logoImageID', type: COLUMN_TYPES.NUMBER},
@@ -88,7 +88,7 @@ const logoImageTableInfo = {
 }
 
 const imageTableInfo = {
-  tableName: 'IMAGE',
+  tableName: 'IMAGES',
   createStatement: 'CREATE TABLE IF NOT EXISTS IMAGES(imageID int NOT NULL AUTO_INCREMENT, version int, PRIMARY KEY (imageID))',
   pk: 'imageID',
   columns: [
@@ -103,8 +103,8 @@ const imageTableInfo = {
 //
 
 const restrictionConditionTableInfo = {
-  tableName: 'RESTRICTION_CONDITION',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITION(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTION(restrictionID))',
+  tableName: 'RESTRICTION_CONDITIONS',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITIONS(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTION(restrictionID))',
   pk: 'conditionID',
   columns: [
     {key: 'conditionID', type: COLUMN_TYPES.NUMBER},
@@ -271,7 +271,7 @@ function logoImageDir(image_id){
 app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
   const image_id = parseInt(req.params.imageId);
   if(image_id == NaN || image_id < 0){
-    connection.query(('INSERT INTO IMAGE(version) VALUES (0);'), (err, results) => {
+    connection.query(('INSERT INTO ' + imageTableInfo.tableName + '(version) VALUES (0);'), (err, results) => {
       console.log(results);
     })
   }
