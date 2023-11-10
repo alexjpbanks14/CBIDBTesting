@@ -197,6 +197,7 @@ function deleteTable(tableInfo, path){
       query = query + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;'
       values.push(a[tableInfo.pk]);
     })
+    console.log(body);
     console.log(query);
     console.log(values);
     connection.query(query, values, (err, result) => {
