@@ -280,7 +280,7 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
   const image_id_params = parseInt(req.params.imageId);
 
   const uploadImage = (image, isNew) => {
-    const image_id = isNew ? image.imageID : image;
+    const image_id = isNew ? image[0].imageID : image;
     console.log(image);
     console.log(isNew);
     fs.rename(image.path, logoImageDir(image_id), (err) => {
