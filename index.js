@@ -283,6 +283,9 @@ app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
     const image_id = isNew ? image[0].imageID : image;
     console.log(image);
     console.log(isNew);
+    console.log(image[0]);
+    console.log(image[0][imageTableInfo.pk]);
+    console.log(image_id);
     fs.rename(image.path, logoImageDir(image_id), (err) => {
       if(err){
         next(err);
