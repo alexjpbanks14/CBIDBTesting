@@ -269,7 +269,7 @@ postImage('/jp_image', jp_image_dir);
 fs.mkdir('/root/logoImages', () => {})
 
 function logoImageDir(image_id){
-  return '/root/logoImages/image' + image_id + '.img';
+  return '/root/logoImages/image' + image_id + '.svg';
 }
 
 app.post('/uploadImage/:imageId', upload.single('image'), (req, res, next) => {
