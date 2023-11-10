@@ -32,6 +32,9 @@ const connection = mysql2.createConnection({
 connection.connect();
 
 const COLUMN_TYPES = {
+  NUMBER_NULL: {
+    SToV: (v) => (v == null ? null : Number(v))
+  },
   NUMBER: {
     SToV: (v) => Number(v)
   },
@@ -62,7 +65,7 @@ const restrictionTableInfo = {
   pk: 'restrictionID',
   columns: [
     {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
-    {key: 'imageID', type: COLUMN_TYPES.NUMBER},
+    {key: 'imageID', type: COLUMN_TYPES.NUMBER_NULL},
     {key: 'title', type: COLUMN_TYPES.STRING(255)},
     {key: 'message', type: COLUMN_TYPES.STRING(500)},
     {key: 'groupID', type: COLUMN_TYPES.NUMBER},
