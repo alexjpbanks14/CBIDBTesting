@@ -277,7 +277,6 @@ const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
 
 app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res, next) => {
   const image = req.file;
-
   if (!image) return res.sendStatus(400);
 
   const suffix = req.params.imageSuffix;
@@ -324,15 +323,16 @@ app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res
   }
 });
 
-app.get('/images/:image_id/:image_version', (req, res) => {
+app.get('/images/:image_id/:image_version', (req, res, next) => {
   const imageID = parseInt(req.params.image_id);
   connection.query('SELECT imageSuffix FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?', [imageID], (err, results) => {
     if(err){
       next(err)
     }else{
-      console.log(results);
-      if(results.length == 0)
+      if(results.length == 0){
         res.sendStatus(404);
+        return;
+      }
       res.sendFile(logoImageDir(imageID, results[0].imageSuffix));
     }
   })
