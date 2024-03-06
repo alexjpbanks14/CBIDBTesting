@@ -244,6 +244,19 @@ function parseRow(row, tableInfo){
   return parsedRow;
 }
 
+function mergeRowsOTM(rowO, rowM, pkO, pkM, refName){
+  var byPK = [];
+  rowM.forEach((a) => {
+    byPK[a[pkM]] = a;
+  });
+  return rowO.map((a) => {
+    const b = {...a};
+    delete b[pkO];
+    b[refName] = byPK[a[pkO]];
+    return b;
+  })
+}
+
 app.get('/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
   connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';', [], (err, result) => {
