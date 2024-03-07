@@ -301,7 +301,7 @@ postImage('/jp_image', jp_image_dir);
 fs.mkdir('/root/logoImages', () => {})
 
 function logoImageDir(image_id, image_suffix){
-  return '/root/logoImages/image' + image_id + '.' + image_suffix;
+  return '/alexb/server/CBIDBTesting/logoImages/image' + image_id + '.' + image_suffix;
 }
 
 const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
