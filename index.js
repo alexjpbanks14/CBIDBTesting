@@ -266,8 +266,7 @@ app.get('/fotv', async (req, res, next) => {
       sunset: sunset.toString(),
       restrictions: result[0].map((a) => parseRow(a, restrictionTableInfo)),//adaptDBToJson(restrictions, restrictionsID), 
       restrictionGroups: result[1].map((a) => parseRow(a, restrictionGroupTableInfo)),// adaptDBToJson(restrictionGroups, restrictionGroupsID),
-      logoImages: result[2].map((a) => parseRow(a, logoImageTableInfo)),
-      images: result[3].map((a) => parseRow(a, imageTableInfo)),
+      logoImages: mergeRowsOTM(result[2].map((a) => parseRow(a, logoImageTableInfo)), result[3].map((a) => parseRow(a, imageTableInfo)), logoImageTableInfo.pk, imageTableInfo.pk, "images"),
       restrictionConditions: result[4].map((a) => parseRow(a, restrictionConditionTableInfo)),
       activeProgramID: 0
     }).end();
