@@ -5,7 +5,7 @@ import axios from 'axios';
 import multer from 'multer';
 import fs from 'fs';
 
-const upload = multer({ dest: '/tmp/uploads/' });
+const upload = multer({ dest: '/home/alexb/tmp/uploads/' });
 
 const app = express()
 const port = 3000
