@@ -4,19 +4,6 @@ import cors from 'cors';
 import axios from 'axios';
 import multer from 'multer';
 import fs from 'fs';
-import http from 'http';
-import httpProxy from 'http-proxy';
-
-httpProxy.createProxyServer({
-  target: {
-    protocol: 'https:',
-    host: 'db-qa.community-boating.org',
-    port: 443,
-    //pfx: fs.readFileSync('path/to/certificate.p12'),
-    //passphrase: 'password',
-  },
-  changeOrigin: true,
-}).listen(5000);
 
 const upload = multer({ dest: '/home/alexb/tmp/uploads/' });
 
@@ -79,7 +66,7 @@ const restrictionGroupTableInfo = {
 
 const restrictionTableInfo = {
   tableName: 'RESTRICTIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, isPriority BOOLEAN, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
   pk: 'restrictionID',
   columns: [
     {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
@@ -91,7 +78,8 @@ const restrictionTableInfo = {
     {key: 'textColor', type: COLUMN_TYPES.STRING(10)},
     {key: 'backgroundColor', type: COLUMN_TYPES.STRING(10)},
     {key: 'fontWeight', type: COLUMN_TYPES.STRING(30)},
-    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER}
+    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER},
+    {key: 'isPriority', type: COLUMN_TYPES.BOOLEAN}
   ]
 }
 
