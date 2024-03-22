@@ -221,11 +221,27 @@ function deleteTable(tableInfo, path){
   })
 }
 
+function postSingletonData(tableInfo, path){
+  app.post(path, (req, res, next) => {
+    const body = req.body;
+    connection.query("SELECT " + tableInfo.pk + " FROM " + tableInfo.tableName + ";", [], (err, result) => {
+      if(err){
+        next(err);
+      }else{
+        const existingDataKeys = {};
+        result.forEach((a) => {
+          console.log(a);
+        })
+      }
+    })
+  })
+}
+
 postTable(restrictionGroupTableInfo, '/restrictionGroup');
 postTable(restrictionTableInfo, '/restriction');
 postTable(logoImageTableInfo, '/logoImage');
 postTable(restrictionConditionTableInfo, '/restrictionCondition');
-postTable(singletonDataTableInfo, '/singletonData');
+postSingletonData(singletonDataTableInfo, '/singletonData');
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
