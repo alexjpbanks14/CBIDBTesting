@@ -232,6 +232,20 @@ function postSingletonData(tableInfo, path){
         result.forEach((a) => {
           console.log(a);
         })
+        const newBody = body.map((a) => {
+          if(existingDataKeys[a.data_key])
+            return a;
+          const newA = {...a};
+          delete newA[tableInfo.pk];
+          return newA;
+        });
+        const cb = (err, result) => {
+          if(err)
+            next(err);
+          else
+            res.json(parseResult(result, tableInfo)).end();
+        }
+        updateRowsStatement(tableInfo, newBody, cb);
       }
     })
   })
