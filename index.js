@@ -125,12 +125,23 @@ const restrictionConditionTableInfo = {
   ]
 }
 
+const singletonDataTableInfo = {
+  tableName: 'SINGLETON_DATA',
+  createStatement: 'CREATE TABLE IF NOT EXISTS SINGLETON_DATA(key VARCHAR(40) NOT NULL, value VARCHAR(100), PRIMARY_KEY(key))',
+  pk: 'key',
+  columns: [
+    {key: "key", type: COLUMN_TYPES.STRING(40)},
+    {key: "value", type: COLUMN_TYPES.STRING_NULL(100)}
+  ]
+}
+
 function createTables(){
     connection.query(imageTableInfo.createStatement);
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
     connection.query(logoImageTableInfo.createStatement);
     connection.query(restrictionConditionTableInfo.createStatement);
+    connection.quert(singletonDataTableInfo.createStatement);
 }
 
 createTables();
@@ -214,11 +225,13 @@ postTable(restrictionGroupTableInfo, '/restrictionGroup');
 postTable(restrictionTableInfo, '/restriction');
 postTable(logoImageTableInfo, '/logoImage');
 postTable(restrictionConditionTableInfo, '/restrictionCondition');
+postTable(singletonDataTableInfo, '/singletonData');
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
 deleteTable(logoImageTableInfo, '/logoImage');
 deleteTable(restrictionConditionTableInfo, '/restrictionCondition');
+deleteTable(singletonDataTableInfo, '/singletonData');
 
 const flagRegex = /".*"/
 
@@ -260,7 +273,7 @@ function mergeRowsOTM(rowO, rowM, pkO, pkM, refName){
 
 app.get('/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
-  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';', [], (err, result) => {
+  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';SELECT * FROM ' + singletonDataTableInfo.tableName + ';', [], (err, result) => {
     if(err)
       next(err);
     res.json({
@@ -270,6 +283,7 @@ app.get('/fotv', async (req, res, next) => {
       logoImages: result[2].map((a) => parseRow(a, logoImageTableInfo)),
       images: result[3].map((a) => parseRow(a, imageTableInfo)),
       restrictionConditions: result[4].map((a) => parseRow(a, restrictionConditionTableInfo)),
+      singletonData: results[5].map((a) => parseRow(a, singletonDataTableInfo)),
       activeProgramID: 0
     }).end();
   });
