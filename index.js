@@ -283,8 +283,8 @@ app.get('/fotv', async (req, res, next) => {
       logoImages: result[2].map((a) => parseRow(a, logoImageTableInfo)),
       images: result[3].map((a) => parseRow(a, imageTableInfo)),
       restrictionConditions: result[4].map((a) => parseRow(a, restrictionConditionTableInfo)),
-      singletonData: results[5].map((a) => parseRow(a, singletonDataTableInfo)),
-      activeProgramID: 0
+      singletonData: results[5].map((a) => parseRow(a, singletonDataTableInfo))
+      //activeProgramID: 0
     }).end();
   });
   //const restrictions = await db.collection(restrictionsCol).list();
