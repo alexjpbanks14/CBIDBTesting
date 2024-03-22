@@ -127,11 +127,11 @@ const restrictionConditionTableInfo = {
 
 const singletonDataTableInfo = {
   tableName: 'SINGLETON_DATA',
-  createStatement: 'CREATE TABLE IF NOT EXISTS SINGLETON_DATA(data_key VARCHAR(40) NOT NULL, data_value VARCHAR(100), PRIMARY_KEY(data_key))',
-  pk: 'data_key',
+  createStatement: 'CREATE TABLE IF NOT EXISTS SINGLETON_DATA(key VARCHAR(40) NOT NULL, value VARCHAR(100), PRIMARY KEY(key))',
+  pk: 'key',
   columns: [
-    {key: "data_key", type: COLUMN_TYPES.STRING(40)},
-    {key: "data_value", type: COLUMN_TYPES.STRING_NULL(100)}
+    {key: "key", type: COLUMN_TYPES.STRING(40)},
+    {key: "value", type: COLUMN_TYPES.STRING_NULL(100)}
   ]
 }
 
