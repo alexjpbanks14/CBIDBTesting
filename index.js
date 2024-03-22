@@ -141,7 +141,7 @@ function createTables(){
     connection.query(restrictionTableInfo.createStatement);
     connection.query(logoImageTableInfo.createStatement);
     connection.query(restrictionConditionTableInfo.createStatement);
-    connection.quert(singletonDataTableInfo.createStatement);
+    connection.query(singletonDataTableInfo.createStatement);
 }
 
 createTables();
