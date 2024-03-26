@@ -182,10 +182,6 @@ function updateRowsStatement(tableInfo,body,cb){
     }
     return queryI;
   }).reduce((a, b) => a + b, '');
-  console.log(query);
-  for(var i of values){
-    console.log(i);
-  }
   connection.query(query, values, cb);
 }
 
