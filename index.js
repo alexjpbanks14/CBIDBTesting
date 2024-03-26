@@ -66,7 +66,7 @@ const restrictionGroupTableInfo = {
 
 const restrictionTableInfo = {
   tableName: 'RESTRICTIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int NOT NULL, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, isPriority BOOLEAN, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, isPriority BOOLEAN, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
   pk: 'restrictionID',
   columns: [
     {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
@@ -172,14 +172,14 @@ function updateRowsStatement(tableInfo,body,cb){
     const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
     const activeColumnsNotPK = activeColumns.filter((a) => a.key != tableInfo.pk);
     var queryI = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
-    ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');';
+    ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ')';
     values = values.concat(activeColumns.map((a) => bn[a]));
     if(bn[tableInfo.pk]){
       values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk], bn[tableInfo.pk]]);
-      queryI = queryI + "ON DUPLICATE KEY UPDATE " + tableInfo.tableName + " SET " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumnsNotPK.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
+      queryI = queryI + " ON DUPLICATE KEY UPDATE " + tableInfo.tableName + " SET " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumnsNotPK.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
     }else{
       values = values.concat(bn[tableInfo.pk]);
-      queryI = queryI + "SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = ?;";
+      queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = ?;";
     }
     return queryI;
   }).reduce((a, b) => a + b, '');
