@@ -169,18 +169,20 @@ function getSingleRow(table, columns, pk, id, cb){
 function updateRowsStatement(tableInfo,body,cb){
   var values = [];
   const query= body.map(bn => {
-    const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined && a.key != tableInfo.pk).map((a) => a.key);
+    const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
+    const activeColumnsNotPK = activeColumns.filter((a) => a.key != tableInfo.pk);
+    var queryI = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
+    ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');';
     values = values.concat(activeColumns.map((a) => bn[a]));
-    if(bn[tableInfo.pk] == undefined){
-      const query = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
-      ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ');SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = LAST_INSERT_ID();';
-      return query;
+    if(bn[tableInfo.pk]){
+      values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk], bn[tableInfo.pk]]);
+      queryI = queryI + "ON DUPLICATE KEY UPDATE " + tableInfo.tableName + " SET " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumnsNotPK.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
     }else{
-      values = values.concat([bn[tableInfo.pk], bn[tableInfo.pk]]);
-      return "UPDATE " + tableInfo.tableName + " SET " + activeColumns.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
+      values = values.concat(bn[tableInfo.pk]);
+      queryI = queryI + "SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = ?;";
     }
   }).reduce((a, b) => a + b, '');
-  connection.query(query, values, cb);
+  connection.query(query + ";", values, cb);
 }
 
 function parseResult(result, tableInfo) {
@@ -221,41 +223,11 @@ function deleteTable(tableInfo, path){
   })
 }
 
-function postSingletonData(tableInfo, path){
-  app.post(path, (req, res, next) => {
-    const body = req.body;
-    connection.query("SELECT " + tableInfo.pk + " FROM " + tableInfo.tableName + ";", [], (err, result) => {
-      if(err){
-        next(err);
-      }else{
-        const existingDataKeys = {};
-        result.forEach((a) => {
-          console.log(a);
-        })
-        const newBody = body.map((a) => {
-          if(existingDataKeys[a.data_key])
-            return a;
-          const newA = {...a};
-          delete newA[tableInfo.pk];
-          return newA;
-        });
-        const cb = (err, result) => {
-          if(err)
-            next(err);
-          else
-            res.json(parseResult(result, tableInfo)).end();
-        }
-        updateRowsStatement(tableInfo, newBody, cb);
-      }
-    })
-  })
-}
-
 postTable(restrictionGroupTableInfo, '/restrictionGroup');
 postTable(restrictionTableInfo, '/restriction');
 postTable(logoImageTableInfo, '/logoImage');
 postTable(restrictionConditionTableInfo, '/restrictionCondition');
-postSingletonData(singletonDataTableInfo, '/singletonData');
+postTable(singletonDataTableInfo, '/singletonData');
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
 deleteTable(restrictionTableInfo, '/restriction');
