@@ -175,8 +175,8 @@ function updateRowsStatement(tableInfo,body,cb){
     ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ')';
     values = values.concat(activeColumns.map((a) => bn[a]));
     if(bn[tableInfo.pk]){
-      values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk], bn[tableInfo.pk]]);
-      queryI = queryI + " ON DUPLICATE KEY UPDATE " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumnsNotPK.length ? ',' : '')), '') + ' WHERE ' + tableInfo.pk + ' = ?;SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
+      values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk]]);
+      queryI = queryI + " ON DUPLICATE KEY UPDATE " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumnsNotPK.length ? ',' : '')), '') + ';SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
     }else{
       values = values.concat(bn[tableInfo.pk]);
       queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = ?;";
