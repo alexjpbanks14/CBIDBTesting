@@ -178,8 +178,7 @@ function updateRowsStatement(tableInfo,body,cb){
       values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk]]);
       queryI = queryI + " ON DUPLICATE KEY UPDATE " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumnsNotPK.length ? ',' : '')), '') + ';SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
     }else{
-      values = values.concat(bn[tableInfo.pk]);
-      queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = ?;";
+      queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = LAST_INSERT_ID();";
     }
     return queryI;
   }).reduce((a, b) => a + b, '');
