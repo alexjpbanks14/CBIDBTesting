@@ -181,8 +181,13 @@ function updateRowsStatement(tableInfo,body,cb){
       values = values.concat(bn[tableInfo.pk]);
       queryI = queryI + "SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = ?;";
     }
+    return queryI;
   }).reduce((a, b) => a + b, '');
-  connection.query(query + ";", values, cb);
+  console.log(query);
+  for(i in values){
+    console.log(i);
+  }
+  connection.query(query, values, cb);
 }
 
 function parseResult(result, tableInfo) {
