@@ -184,7 +184,7 @@ function updateRowsStatement(tableInfo,body,cb){
     return queryI;
   }).reduce((a, b) => a + b, '');
   console.log(query);
-  for(i in values){
+  for(var i of values){
     console.log(i);
   }
   connection.query(query, values, cb);
