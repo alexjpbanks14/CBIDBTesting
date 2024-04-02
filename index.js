@@ -258,6 +258,7 @@ app.post('/change_password', (req, res, next) => {
   }
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
     connection.query("UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?", [hash, username], (err, results) => {
+      console.log(results)
       if(results[0].affectedRows == 0){
         res.sendStatus(400)
         res.json({
