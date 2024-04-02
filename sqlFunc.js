@@ -1,7 +1,6 @@
-import { app } from '.';
-import { connection } from '.';
+const {app, connection} = require('./index.js')
 
-export function updateRowsStatement(tableInfo, body, cb) {
+function updateRowsStatement(tableInfo, body, cb) {
   var values = [];
   const query = body.map(bn => {
     const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
@@ -20,7 +19,7 @@ export function updateRowsStatement(tableInfo, body, cb) {
   connection.query(query, values, cb);
 }
 
-export function parseRow(row, tableInfo) {
+function parseRow(row, tableInfo) {
   const parsedRow = {};
   if (row == undefined)
     return parsedRow;
@@ -30,11 +29,11 @@ export function parseRow(row, tableInfo) {
   return parsedRow;
 }
 
-export function parseResult(result, tableInfo) {
+function parseResult(result, tableInfo) {
   return result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo));
 }
 
-export function postTable(tableInfo, path) {
+function postTable(tableInfo, path) {
   app.post(path, (req, res, next) => {
     const body = req.body;
     const cb = (err, result) => {
@@ -47,7 +46,7 @@ export function postTable(tableInfo, path) {
     updateRowsStatement(tableInfo, body, cb);
   });
 }
-export function deleteTable(tableInfo, path) {
+function deleteTable(tableInfo, path) {
   app.delete(path, (req, res, next) => {
     const body = Array.isArray(req.body) ? req.body : [req.body];
     var query = '';
@@ -68,4 +67,5 @@ export function deleteTable(tableInfo, path) {
     });
   });
 }
+module.exports = {postTable, deleteTable, parseResult, parseRow, updateRowsStatement}
 

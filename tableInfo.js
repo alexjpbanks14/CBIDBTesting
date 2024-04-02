@@ -1,6 +1,26 @@
-import { COLUMN_TYPES } from '.';
+const COLUMN_TYPES = {
+  NUMBER_NULL: {
+    SToV: (v) => (v == null ? null : Number(v))
+  },
+  NUMBER: {
+    SToV: (v) => Number(v)
+  },
+  STRING: (l) => ({
+    SToV: (v) => {
+      return String(v);
+    }
+  }),
+  STRING_NULL: (l) => ({
+    SToV: (v) => {
+      return v == null ? null : String(v);
+    }
+  }),
+  BOOLEAN: {
+    SToV: (v) => Boolean(v)
+  }
+}
 
-export const userTableInfo = {
+const userTableInfo = {
   tableName: 'USERS',
   createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(50) NOT NULL, passhash VARCHAR(31))',
   pk: 'userID',
@@ -10,7 +30,7 @@ export const userTableInfo = {
     { key: 'passhash', type: COLUMN_TYPES.STRING(31) }
   ]
 };
-export const restrictionGroupTableInfo = {
+const restrictionGroupTableInfo = {
   tableName: 'RESTRICTION_GROUPS',
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
   pk: 'groupID',
@@ -20,7 +40,7 @@ export const restrictionGroupTableInfo = {
     { key: 'displayOrder', type: COLUMN_TYPES.NUMBER }
   ]
 };
-export const restrictionTableInfo = {
+const restrictionTableInfo = {
   tableName: 'RESTRICTIONS',
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, isPriority BOOLEAN, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
   pk: 'restrictionID',
@@ -38,7 +58,7 @@ export const restrictionTableInfo = {
     { key: 'isPriority', type: COLUMN_TYPES.BOOLEAN }
   ]
 };
-export const logoImageTableInfo = {
+const logoImageTableInfo = {
   tableName: 'LOGO_IMAGES',
   createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(logoImageID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (logoImageID), FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
   pk: 'logoImageID',
@@ -50,7 +70,7 @@ export const logoImageTableInfo = {
     { key: 'imageType', type: COLUMN_TYPES.NUMBER },
   ]
 };
-export const imageTableInfo = {
+const imageTableInfo = {
   tableName: 'IMAGES',
   createStatement: 'CREATE TABLE IF NOT EXISTS IMAGES(imageID int NOT NULL AUTO_INCREMENT, imageSuffix varchar(20), version int, PRIMARY KEY (imageID))',
   pk: 'imageID',
@@ -64,7 +84,7 @@ export const imageTableInfo = {
 //Type: Time, State
 //Info
 //
-export const restrictionConditionTableInfo = {
+const restrictionConditionTableInfo = {
   tableName: 'RESTRICTION_CONDITIONS',
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITIONS(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTIONS(restrictionID) ON DELETE CASCADE)',
   pk: 'conditionID',
@@ -76,7 +96,7 @@ export const restrictionConditionTableInfo = {
     { key: 'conditionInfo', type: COLUMN_TYPES.STRING_NULL(2000) }
   ]
 };
-export const singletonDataTableInfo = {
+const singletonDataTableInfo = {
   tableName: 'SINGLETON_DATA',
   createStatement: 'CREATE TABLE IF NOT EXISTS SINGLETON_DATA(data_key VARCHAR(40) NOT NULL, value VARCHAR(100), PRIMARY KEY(data_key))',
   pk: 'data_key',
@@ -85,3 +105,5 @@ export const singletonDataTableInfo = {
     { key: "value", type: COLUMN_TYPES.STRING_NULL(100) }
   ]
 };
+
+module.exports = {userTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, imageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo}

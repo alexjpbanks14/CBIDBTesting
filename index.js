@@ -1,19 +1,19 @@
-import express from 'express';
-import mysql2 from 'mysql2';
-import cors from 'cors';
-import axios from 'axios';
-import multer from 'multer';
-import fs from 'fs';
-import ini from 'ini';
-import bcrypt from 'bcrypt';
-import { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } from './tableInfo';
-import { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } from './sqlFunc';
+const express = require('express');
+const mysql2 = require('mysql2');
+const cors = require('cors');
+const axios = require('axios');
+const multer = require('multer');
+const fs = require('fs');
+const ini = require('ini');
+const bcrypt = require('bcrypt');
+const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } = require('./tableInfo');
+const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
 
 const config = ini.parse(fs.readFileSync(`./config.ini`, 'utf-8'))
 
 const upload = multer({ dest: config.imageTempDir });
 
-export const app = express()
+const app = express()
 const port = config.port
 
 app.use(express.json())
@@ -27,7 +27,7 @@ app.use(cors({
   }
 }));
 
-export const connection = mysql2.createConnection({
+const connection = mysql2.createConnection({
   multipleStatements: true,
   host: config.mysql.host,
   user: config.mysql.user,
@@ -37,27 +37,7 @@ export const connection = mysql2.createConnection({
 
 connection.connect();
 
-export const COLUMN_TYPES = {
-  NUMBER_NULL: {
-    SToV: (v) => (v == null ? null : Number(v))
-  },
-  NUMBER: {
-    SToV: (v) => Number(v)
-  },
-  STRING: (l) => ({
-    SToV: (v) => {
-      return String(v);
-    }
-  }),
-  STRING_NULL: (l) => ({
-    SToV: (v) => {
-      return v == null ? null : String(v);
-    }
-  }),
-  BOOLEAN: {
-    SToV: (v) => Boolean(v)
-  }
-}
+module.exports = {app, connection}
 
 function createTables(){
     connection.query(userTableInfo.createStatement);
