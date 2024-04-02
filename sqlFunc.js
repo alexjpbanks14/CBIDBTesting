@@ -1,6 +1,5 @@
 import { app } from '.';
 import { connection } from '.';
-import { parseResult, updateRowsStatement } from './sqlFunc';
 
 export function updateRowsStatement(tableInfo, body, cb) {
   var values = [];
