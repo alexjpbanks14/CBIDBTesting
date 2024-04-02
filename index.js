@@ -274,7 +274,6 @@ app.post('/change_password', (req, res, next) => {
 app.post('/login', (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password);
-  connection.query("DROP TABLE SESSIONS", [], () => {});
   connection.query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
     if(err){
       next(err)
