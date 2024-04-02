@@ -241,8 +241,8 @@ app.post('/create_user', (req, res, next) => {
 console.log(config.saltRounds);
 
 app.post('/change_password', (req, res, next) => {
-  const username = new String(req.body.username);
-  const password = new String(req.body.password).replace("\g ", "");
+  const username = String(req.body.username);
+  const password = String(req.body.password).replace("\g ", "");
   console.log(req.body)
   console.log(password)
   if(!checkPermission(req, res)){
