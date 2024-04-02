@@ -35,6 +35,7 @@ function parseResult(result, tableInfo) {
 
 function postTable(tableInfo, path) {
   app.post(path, (req, res, next) => {
+    console.log(req.body)
     const body = req.body;
     const cb = (err, result) => {
       if (err)
