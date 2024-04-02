@@ -303,7 +303,8 @@ app.post('/api/authenticate-staff', (req, res, next) => {
               }else{
                 res.cookie("sessionUUID", uuid)
                 res.json({
-                  result: "OK"
+                  result: "OK",
+                  success: true
                 })
               }
             })
