@@ -1,41 +1,9 @@
-const express = require('express');
-const mysql2 = require('mysql2');
-const cors = require('cors');
 const axios = require('axios');
-const multer = require('multer');
 const fs = require('fs');
-const ini = require('ini');
 const bcrypt = require('bcrypt');
 const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } = require('./tableInfo');
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
-
-const config = ini.parse(fs.readFileSync(`./config.ini`, 'utf-8'))
-
-const upload = multer({ dest: config.imageTempDir });
-
-const app = express()
-const port = config.port
-
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-
-var allowedOrigins = ['http://localhost:8081',
-                      'http://yourapp.com'];
-app.use(cors({
-  origin: function(origin, callback){
-    return callback(null, true);
-  }
-}));
-
-const connection = mysql2.createConnection({
-  multipleStatements: true,
-  host: config.mysql.host,
-  user: config.mysql.user,
-  password: config.mysql.password,
-  database: config.mysql.database
-})
-
-connection.connect();
+const { connection, app, upload, config, port } = require('./connection');
 
 module.exports = {app, connection}
 
