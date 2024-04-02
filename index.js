@@ -219,7 +219,7 @@ console.log("alerter");
 
 app.post('/change_password', (req, res, next) => {
   const username = new String(req.body.username);
-  const password = new String(req.body.password).replaceAll(" ", "");
+  const password = new String(req.body.password).replace("\g ", "");
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
