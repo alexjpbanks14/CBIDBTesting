@@ -221,7 +221,7 @@ app.post('/create_user', (req, res, next) => {
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
     console.log(hash);
     console.log(username);
-      const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT * FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
+      const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT (username, userID) FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
       console.log(query)
       connection.query(query, [username, hash], (err, results) => {
       if(err){
@@ -269,16 +269,21 @@ app.post('/change_password', (req, res, next) => {
 app.post('/login', (req, res, next) => {
   const username = new String(req.username);
   const password = new String(req.password);
-  connection.query("SELECT passhash FROM " + userTableInfo.tableName + " WHERE username = ?;", [], (err, results) => {
+  connection.query("SELECT passhash FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
     if(err){
       next(err)
       return
     }else{
-      
+      if(results.length > 0){
+        res.json({
+          uuid: uuidv4().length
+        })
+      }else{
+        res.sendStatus(400)
+        res.json({result: "BAD"})
+        console.log("BUTT");
+      }
     }
-  })
-  res.json({
-    uuid: uuidv4().length
   })
 })
 
