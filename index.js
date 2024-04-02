@@ -189,6 +189,10 @@ app.get('/images/:image_id/:image_version', (req, res, next) => {
   })
 })
 
+function checkPermission(req, res) {
+  return true
+}
+
 app.get('/ap_image', (req, res) => {
   res.sendFile(ap_image_dir);
 })
@@ -197,11 +201,7 @@ app.get('/jp_image', (req, res) => {
   res.sendFile(jp_image_dir);
 })
 
-function checkPermission(req, res) {
-  return true
-}
-
-app.post('/create_user', (req, res) => {
+app.post('/create_user', (req, res, next) => {
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
@@ -215,7 +215,9 @@ app.post('/create_user', (req, res) => {
   })
 })
 
-app.post('/change_password', (req, res) => {
+console.log("alerter");
+
+app.post('/change_password', (req, res, next) => {
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
