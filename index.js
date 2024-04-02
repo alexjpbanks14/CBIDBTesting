@@ -278,8 +278,10 @@ app.post('/login', (req, res, next) => {
       next(err)
       return
     }else{
+      console.log(results);
       if(results.length > 0){
         bcrypt.compare(password, results[0]).then(result => {
+          console.log(result);
           if(result){
             const uuid = uuidv4();
             //connection.query("INSERT INTO " + session)
