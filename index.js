@@ -6,9 +6,8 @@ import multer from 'multer';
 import fs from 'fs';
 import ini from 'ini';
 import bcrypt from 'bcrypt';
-import { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } from './tableInfo.js';
-import { parseResult, updateRowsStatement, parseRow } from './sqlFunc.js';
-import { postTable, deleteTable } from './sqlFunc.js';
+import { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } from './tableInfo';
+import { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } from './sqlFunc';
 
 const config = ini.parse(fs.readFileSync(`./config.ini`, 'utf-8'))
 
