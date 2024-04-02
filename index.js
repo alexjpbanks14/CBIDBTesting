@@ -260,7 +260,7 @@ app.post('/change_password', (req, res, next) => {
     const query = "UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?;";
     console.log(query);
     console.log(hash)
-    connection.query(query, [username, hash], (err, results) => {
+    connection.query(query, [hash, username], (err, results) => {
       if(err){
         next(err)
         return
