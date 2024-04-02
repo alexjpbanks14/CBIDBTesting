@@ -218,8 +218,8 @@ app.post('/create_user', (req, res, next) => {
 console.log("alerter");
 
 app.post('/change_password', (req, res, next) => {
-  const username = String(req.body.username);
-  const password = String(req.body.password).replaceAll(" ", "");
+  const username = new String(req.body.username);
+  const password = new String(req.body.password).replaceAll(" ", "");
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
