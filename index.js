@@ -227,7 +227,7 @@ app.post('/create_user', (req, res, next) => {
       if(err){
         next(err)
       }else{
-        res.json(results[0]);
+        res.json(results[1]);
       }
     })
   })
@@ -246,12 +246,22 @@ app.post('/change_password', (req, res, next) => {
   }
   if(!checkPassword(password)){
     res.sendStatus(400)
+    res.json({
+      result: "BADPASS"
+    })
     return
   }
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
     connection.query("UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?", [], (err, results))
+    if(results[0].affectedRows == 0){
+      res.sendStatus(400)
+      res.json({
+        result: "FAIL"
+      })
+      return
+    }
     res.json({
-      hash: hash 
+      result: "OK"
     })
   })
 })
