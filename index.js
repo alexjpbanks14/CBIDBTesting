@@ -208,8 +208,8 @@ function checkPassword(password){
 }
 
 app.post('/create_user', (req, res, next) => {
-  const username = new String(req.body.username);
-  const password = new String(req.body.password);
+  const username = String(req.body.username);
+  const password = String(req.body.password).replace("\g ", "");
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
