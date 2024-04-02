@@ -4,11 +4,18 @@ import cors from 'cors';
 import axios from 'axios';
 import multer from 'multer';
 import fs from 'fs';
+import ini from 'ini';
+import bcrypt from 'bcrypt';
+import { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } from './tableInfo';
+import { parseResult, updateRowsStatement, parseRow } from './sqlFunc';
+import { postTable, deleteTable } from './sqlFunc';
 
-const upload = multer({ dest: '/home/alexb/tmp/uploads/' });
+const config = ini.parse(fs.readFileSync(`./config.ini`, 'utf-8'))
 
-const app = express()
-const port = 6969
+const upload = multer({ dest: config.imageTempDir });
+
+export const app = express()
+const port = config.port
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -21,17 +28,17 @@ app.use(cors({
   }
 }));
 
-const connection = mysql2.createConnection({
+export const connection = mysql2.createConnection({
   multipleStatements: true,
-  host: 'localhost',
-  user: 'root',
-  password: 'tokugawa',
-  database: 'cbidbtesting'
+  host: config.mysql.host,
+  user: config.mysql.user,
+  password: config.mysql.password,
+  database: config.mysql.database
 })
 
 connection.connect();
 
-const COLUMN_TYPES = {
+export const COLUMN_TYPES = {
   NUMBER_NULL: {
     SToV: (v) => (v == null ? null : Number(v))
   },
@@ -53,89 +60,8 @@ const COLUMN_TYPES = {
   }
 }
 
-const restrictionGroupTableInfo = {
-  tableName: 'RESTRICTION_GROUPS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
-  pk: 'groupID',
-  columns: [
-    {key: 'groupID', type: COLUMN_TYPES.NUMBER},
-    {key: 'title', type: COLUMN_TYPES.STRING(255)},
-    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER}
-  ]
-}
-
-const restrictionTableInfo = {
-  tableName: 'RESTRICTIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, isPriority BOOLEAN, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
-  pk: 'restrictionID',
-  columns: [
-    {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
-    {key: 'imageID', type: COLUMN_TYPES.NUMBER_NULL},
-    {key: 'title', type: COLUMN_TYPES.STRING(255)},
-    {key: 'message', type: COLUMN_TYPES.STRING(500)},
-    {key: 'groupID', type: COLUMN_TYPES.NUMBER},
-    {key: 'active', type: COLUMN_TYPES.BOOLEAN},
-    {key: 'textColor', type: COLUMN_TYPES.STRING(10)},
-    {key: 'backgroundColor', type: COLUMN_TYPES.STRING(10)},
-    {key: 'fontWeight', type: COLUMN_TYPES.STRING(30)},
-    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER},
-    {key: 'isPriority', type: COLUMN_TYPES.BOOLEAN}
-  ]
-}
-
-const logoImageTableInfo = {
-  tableName: 'LOGO_IMAGES',
-  createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(logoImageID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (logoImageID), FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
-  pk: 'logoImageID',
-  columns: [
-    {key: 'logoImageID', type: COLUMN_TYPES.NUMBER},
-    {key: 'imageID', type: COLUMN_TYPES.NUMBER},
-    {key: 'title', type: COLUMN_TYPES.STRING(255)},
-    {key: 'displayOrder', type: COLUMN_TYPES.NUMBER},
-    {key: 'imageType', type: COLUMN_TYPES.NUMBER},
-  ]
-}
-
-const imageTableInfo = {
-  tableName: 'IMAGES',
-  createStatement: 'CREATE TABLE IF NOT EXISTS IMAGES(imageID int NOT NULL AUTO_INCREMENT, imageSuffix varchar(20), version int, PRIMARY KEY (imageID))',
-  pk: 'imageID',
-  columns: [
-    {key: 'imageID', type: COLUMN_TYPES.NUMBER},
-    {key: 'imageSuffix', type: COLUMN_TYPES.STRING(20)},
-    {key: 'version', type: COLUMN_TYPES.NUMBER}
-  ]
-}
-
-//Action: Enable, Disable, Toggle
-//Type: Time, State
-//Info
-//
-
-const restrictionConditionTableInfo = {
-  tableName: 'RESTRICTION_CONDITIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_CONDITIONS(conditionID int NOT NULL AUTO_INCREMENT, restrictionID int, conditionAction int, conditionType int, conditionInfo varchar(2000), PRIMARY KEY(conditionID), FOREIGN KEY(restrictionID) REFERENCES RESTRICTIONS(restrictionID) ON DELETE CASCADE)',
-  pk: 'conditionID',
-  columns: [
-    {key: 'conditionID', type: COLUMN_TYPES.NUMBER},
-    {key: 'restrictionID', type: COLUMN_TYPES.NUMBER},
-    {key: 'conditionAction', type: COLUMN_TYPES.NUMBER_NULL},
-    {key: 'conditionType', type: COLUMN_TYPES.NUMBER_NULL},
-    {key: 'conditionInfo', type: COLUMN_TYPES.STRING_NULL(2000)}
-  ]
-}
-
-const singletonDataTableInfo = {
-  tableName: 'SINGLETON_DATA',
-  createStatement: 'CREATE TABLE IF NOT EXISTS SINGLETON_DATA(data_key VARCHAR(40) NOT NULL, value VARCHAR(100), PRIMARY KEY(data_key))',
-  pk: 'data_key',
-  columns: [
-    {key: "data_key", type: COLUMN_TYPES.STRING(40)},
-    {key: "value", type: COLUMN_TYPES.STRING_NULL(100)}
-  ]
-}
-
 function createTables(){
+    connection.query(userTableInfo.createStatement);
     connection.query(imageTableInfo.createStatement);
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
@@ -160,67 +86,6 @@ async function getSunsetTime() {
     lastTime = new Date();
   }
   return lastSunset;
-}
-
-function getSingleRow(table, columns, pk, id, cb){
-  connection.query("SELECT * FROM " + table + " WHERE " + pk + " = ?", [id], cb);
-}
-
-function updateRowsStatement(tableInfo,body,cb){
-  var values = [];
-  const query= body.map(bn => {
-    const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
-    const activeColumnsNotPK = activeColumns.filter((a) => a.key != tableInfo.pk);
-    var queryI = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i+1 < activeColumns.length ? ',' : '')), '') +
-    ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i+1 < activeColumns.length ? ',' : '')), '') + ')';
-    values = values.concat(activeColumns.map((a) => bn[a]));
-    if(bn[tableInfo.pk]){
-      values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk]]);
-      queryI = queryI + " ON DUPLICATE KEY UPDATE " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i+1 < activeColumnsNotPK.length ? ',' : '')), '') + ';SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
-    }else{
-      queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = LAST_INSERT_ID();";
-    }
-    return queryI;
-  }).reduce((a, b) => a + b, '');
-  connection.query(query, values, cb);
-}
-
-function parseResult(result, tableInfo) {
-  return result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo))
-}
-
-function postTable(tableInfo, path){
-  app.post(path, (req, res, next) => {
-    const body = req.body;
-    const cb = (err, result) => {
-      if(err)
-        next(err);
-      else
-        res.json(parseResult(result, tableInfo)).end();
-    }
-    updateRowsStatement(tableInfo, body, cb);
-  })
-}
-
-function deleteTable(tableInfo, path){
-  app.delete(path, (req, res, next) => {
-    const body = Array.isArray(req.body) ? req.body : [req.body];
-    var query = '';
-    var values = [];
-    body.forEach((a) => {
-      query = query + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;'
-      values.push(a[tableInfo.pk]);
-    })
-    console.log(body);
-    console.log(query);
-    console.log(values);
-    connection.query(query, values, (err, result) => {
-      if(err)
-        next(err);
-      else
-        res.json({result: 'ok'}).end();
-    })
-  })
 }
 
 postTable(restrictionGroupTableInfo, '/restrictionGroup');
@@ -249,16 +114,6 @@ app.get('/flag-color', (req, res) => {
     throw e;
   })
 });
-
-function parseRow(row, tableInfo){
-  const parsedRow = {};
-  if(row == undefined)
-    return parsedRow;
-  tableInfo.columns.forEach((a) => {
-    parsedRow[a.key] = a.type.SToV(row[a.key]);
-  })
-  return parsedRow;
-}
 
 function mergeRowsOTM(rowO, rowM, pkO, pkM, refName){
   var byPK = [];
@@ -362,7 +217,6 @@ app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res
       }
       else{
         const res = parseResult(results, imageTableInfo);
-        console.log(res[0]);
         uploadImage(res[0].imageID, res, true);
       }
     });
@@ -390,11 +244,41 @@ app.get('/images/:image_id/:image_version', (req, res, next) => {
 
 app.get('/ap_image', (req, res) => {
   res.sendFile(ap_image_dir);
-});
+})
 
 app.get('/jp_image', (req, res) => {
   res.sendFile(jp_image_dir);
-});
+})
+
+function checkPermission(req, res) {
+  return true
+}
+
+app.post('/create_user', (req, res) => {
+  if(!checkPermission(req, res)){
+    res.sendStatus(401)
+    return
+  }
+  connection.query("INSERT INTO " + userTableInfo.tableName + " (username) VALUES (?); SELECT * FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();", [req.username], (err, results) => {
+    if(err){
+      next(err)
+    }else{
+      res.json(parseResult(result, userTableInfo));
+    }
+  })
+})
+
+app.post('/change_password', (req, res) => {
+  if(!checkPermission(req, res)){
+    res.sendStatus(401)
+    return
+  }
+  bcrypt.hash(req.password, config.saltRounds).then(hash => {
+    res.json({
+      hash: hash 
+    })
+  })
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)

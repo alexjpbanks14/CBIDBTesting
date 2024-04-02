@@ -1,0 +1,7 @@
+port = 6969
+imageTempDir = /home/alexb/tmp/uploads/
+[mysql]
+host = host
+user = user
+password = password
+database = database
