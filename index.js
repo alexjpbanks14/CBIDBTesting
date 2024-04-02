@@ -209,8 +209,6 @@ function checkPassword(password){
   return password.length > 6 && password.length < 30;
 }
 
-connection.query("DROP TABLE USERS", [], ()=>{});
-
 app.post('/create_user', (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password).replace("\g ", "");
