@@ -284,7 +284,7 @@ app.post('/login', (req, res, next) => {
           if(result){
             const uuid = uuidv4();
             console.log(results[0].userID);
-            connection.query("INSERT INTO " + sessionTableInfo + " (userID, sessionUUID, active) VALUES (?, ?, ?);", [results[0].userID, uuid, true], (err2, results2) => {
+            connection.query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active) VALUES (?, ?, ?);", [results[0].userID, uuid, true], (err2, results2) => {
               if(err2){
                 next(err2)
                 return
