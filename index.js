@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } = require('./tableInfo');
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
 const { connection, app, upload, config, port } = require('./connection');
+const { v4: uuidv4 } = require('uuid');
 
 module.exports = {app, connection}
 
@@ -232,6 +233,12 @@ app.post('/change_password', (req, res, next) => {
     res.json({
       hash: hash 
     })
+  })
+})
+
+app.post('/login', (req, res, next) => {
+  res.json({
+    uuid: uuidv4()
   })
 })
 

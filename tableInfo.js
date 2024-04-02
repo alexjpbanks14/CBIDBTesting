@@ -20,9 +20,21 @@ const COLUMN_TYPES = {
   }
 }
 
+connection.query("DROP TABLE USERS");
+
 const userTableInfo = {
   tableName: 'USERS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(50) NOT NULL, passhash VARCHAR(31), PRIMARY KEY(userID))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(50) NOT NULL, passhash VARCHAR(60), PRIMARY KEY(userID))',
+  pk: 'userID',
+  columns: [
+    { key: 'userID', type: COLUMN_TYPES.NUMBER },
+    { key: 'username', type: COLUMN_TYPES.STRING(50) },
+    { key: 'passhash', type: COLUMN_TYPES.STRING(60) }
+  ]
+};
+const sessionTableInfo = {
+  tableName: 'SESSIONS',
+  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionKey VARCHAR(50) NOT NULL, passhash VARCHAR(31), PRIMARY KEY(userID))',
   pk: 'userID',
   columns: [
     { key: 'userID', type: COLUMN_TYPES.NUMBER },
