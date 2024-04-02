@@ -218,17 +218,23 @@ app.post('/create_user', (req, res, next) => {
   }
   console.log(req.body);
   console.log(password);
-  bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
-    console.log(hash);
-    console.log(username);
-      const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT (username, userID) FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
-      console.log(query)
-      connection.query(query, [username, hash], (err, results) => {
-      if(err){
-        next(err)
-      }else{
-        res.json(results[1]);
-      }
+  connection.query("SELECT userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
+    if(results.length > 0){
+      res.json({result: "USER EXISTS"})
+      return
+    }
+    bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
+      console.log(hash);
+      console.log(username);
+        const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
+        console.log(query)
+        connection.query(query, [username, hash], (err, results) => {
+        if(err){
+          next(err)
+        }else{
+          res.json(results[1]);
+        }
+      })
     })
   })
 })
