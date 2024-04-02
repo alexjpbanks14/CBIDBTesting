@@ -218,11 +218,17 @@ app.post('/create_user', (req, res, next) => {
 console.log("alerter");
 
 app.post('/change_password', (req, res, next) => {
+  const username = String(req.body.username);
+  const password = String(req.body.password).replaceAll(" ", "");
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
   }
-  bcrypt.hash(req.password, config.saltRounds).then(hash => {
+  if(password.length < 6){
+    res.sendStatus(400)
+    return
+  }
+  bcrypt.hash(password, config.saltRounds).then(hash => {
     res.json({
       hash: hash 
     })
