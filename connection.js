@@ -33,5 +33,5 @@ const connection = mysql2.createConnection({
 });
 connection.connect();
 exports.connection = connection;
-const query = util.promisify(conn.query).bind(conn);
+const query = util.promisify(connection.query).bind(connection);
 exports.query = query
