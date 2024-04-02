@@ -214,6 +214,7 @@ app.post('/create_user', (req, res, next) => {
     res.sendStatus(401)
     return
   }
+  console.log(password);
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
       connection.query("INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT (username, passhash) FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();", [username, hash], (err, results) => {
       if(err){
