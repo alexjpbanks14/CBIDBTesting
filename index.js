@@ -227,7 +227,6 @@ app.post('/create_user', (req, res, next) => {
       console.log(hash);
       console.log(username);
         const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
-        console.log(query)
         connection.query(query, [username, hash], (err, results) => {
         if(err){
           next(err)
@@ -258,7 +257,7 @@ app.post('/change_password', (req, res, next) => {
     return
   }
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
-    connection.query("UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?", [], (err, results))
+    connection.query("UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?", [username], (err, results))
     if(results[0].affectedRows == 0){
       res.sendStatus(400)
       res.json({
