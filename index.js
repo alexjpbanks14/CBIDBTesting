@@ -1,7 +1,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
-const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo } = require('./tableInfo');
+const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo } = require('./tableInfo');
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
 const { connection, app, upload, config, port } = require('./connection');
 const { v4: uuidv4 } = require('uuid');
@@ -11,6 +11,7 @@ module.exports = {app, connection}
 
 function createTables(){
     connection.query(userTableInfo.createStatement);
+    connection.query(sessionTableInfo.createStatement);
     connection.query(imageTableInfo.createStatement);
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
@@ -273,22 +274,25 @@ app.post('/change_password', (req, res, next) => {
 app.post('/login', (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password);
-  console.log(username);
-  connection.query("SELECT passhash FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
+  connection.query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
     if(err){
       next(err)
       return
     }else{
-      console.log(results);
       if(results.length > 0){
-        bcrypt.compare(password, results[0]).then(result => {
-          console.log(result);
+        bcrypt.compare(password, results[0].passhash).then(result => {
           if(result){
             const uuid = uuidv4();
-            //connection.query("INSERT INTO " + session)
-            res.cookie("sessionUUID", uuid)
-            res.json({
-              result: "OK"
+            connection.query("INSERT INTO " + sessionTableInfo + " (userID, sessionUUID, active) VALUES (?, ?, ?);", [results[0].userID, uuid, true], (err2, results2) => {
+              if(err2){
+                next(err2)
+                return
+              }else{
+                res.cookie("sessionUUID", uuid)
+                res.json({
+                  result: "OK"
+                })
+              }
             })
           }else {
             res.json({result: "BAD"})
