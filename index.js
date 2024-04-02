@@ -240,7 +240,7 @@ app.post('/change_password', (req, res, next) => {
 
 app.post('/login', (req, res, next) => {
   res.json({
-    uuid: uuidv4()
+    uuid: uuidv4().length
   })
 })
 
