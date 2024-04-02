@@ -32,7 +32,7 @@ const userTableInfo = {
 };
 const sessionTableInfo = {
   tableName: 'SESSIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionKey VARCHAR(100) NOT NULL, userID int, active BOOLEAN, PRIMARY KEY(sessionID), FOREIGN KEY userID REFERENCES USERS(userID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionKey VARCHAR(100) NOT NULL, userID int, active BOOLEAN, PRIMARY KEY(sessionID), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
   pk: 'sessionID',
   columns: [
     { key: 'sessionID', type: COLUMN_TYPES.NUMBER },
