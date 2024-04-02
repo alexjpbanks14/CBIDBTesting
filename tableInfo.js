@@ -20,8 +20,6 @@ const COLUMN_TYPES = {
   }
 }
 
-connection.query("DROP TABLE USERS");
-
 const userTableInfo = {
   tableName: 'USERS',
   createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(50) NOT NULL, passhash VARCHAR(60), PRIMARY KEY(userID))',
