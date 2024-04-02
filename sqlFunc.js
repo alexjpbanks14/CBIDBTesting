@@ -1,4 +1,4 @@
-const {app, connection} = require('./index.js')
+const {app, connection} = require('./index')
 
 function updateRowsStatement(tableInfo, body, cb) {
   var values = [];
