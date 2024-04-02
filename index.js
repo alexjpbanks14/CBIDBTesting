@@ -283,7 +283,7 @@ app.post('/change_password', (req, res, next) => {
   })
 })
 
-app.post('/login', (req, res, next) => {
+app.post('/api/authenticate-staff', (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password);
   connection.query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
