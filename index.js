@@ -3,7 +3,7 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo } = require('./tableInfo');
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
-const { connection, app, upload, config, port } = require('./connection');
+const { connection, app, upload, config, port, query } = require('./connection');
 const { v4: uuidv4 } = require('uuid');
 const { kMaxLength } = require('buffer');
 
@@ -75,6 +75,12 @@ function mergeRowsOTM(rowO, rowM, pkO, pkM, refName){
     delete b[pkO];
     b[refName] = byPK[a[pkO]];
     return b;
+  })
+}
+
+async function isLoggedIn(request){
+  await query("SELECT * FROM USERS WHERE username = ?",["derp"]).then((a) => {
+    console.log(a);
   })
 }
 
@@ -238,6 +244,7 @@ app.post('/create_user', (req, res, next) => {
 console.log(config.saltRounds);
 
 app.post('/change_password', (req, res, next) => {
+  isLoggedIn(req)
   const username = String(req.body.username);
   const password = String(req.body.password).replace("\g ", "");
   if(!checkPermission(req, res)){

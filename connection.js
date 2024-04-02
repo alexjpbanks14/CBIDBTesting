@@ -4,6 +4,7 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const ini = require('ini');
+const util = require('util');
 
 const config = ini.parse(fs.readFileSync(`./config.ini`, 'utf-8'));
 exports.config = config;
@@ -32,3 +33,5 @@ const connection = mysql2.createConnection({
 });
 connection.connect();
 exports.connection = connection;
+const query = util.promisify(conn.query).bind(conn);
+exports.query = query
