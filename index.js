@@ -267,7 +267,7 @@ app.post('/change_password', (req, res, next) => {
         return
       }
       console.log(results)
-      if(results[0].affectedRows == 0){
+      if(results.affectedRows == 0){
         res.sendStatus(400)
         res.json({
           result: "FAIL"
