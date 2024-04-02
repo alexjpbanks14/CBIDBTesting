@@ -32,12 +32,13 @@ const userTableInfo = {
 };
 const sessionTableInfo = {
   tableName: 'SESSIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionKey VARCHAR(50) NOT NULL, passhash VARCHAR(31), PRIMARY KEY(userID))',
-  pk: 'userID',
+  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionKey VARCHAR(100) NOT NULL, userID int, active BOOLEAN, PRIMARY KEY(sessionID), FOREIGN KEY userID REFERENCES USERS(userID) ON DELETE CASCADE)',
+  pk: 'sessionID',
   columns: [
-    { key: 'userID', type: COLUMN_TYPES.NUMBER },
-    { key: 'username', type: COLUMN_TYPES.STRING(50) },
-    { key: 'passhash', type: COLUMN_TYPES.STRING(31) }
+    { key: 'sessionID', type: COLUMN_TYPES.NUMBER },
+    { key: 'sessionUUID', type: COLUMN_TYPES.STRING(100) },
+    { key: 'active', type: COLUMN_TYPES.BOOLEAN },
+    { key: 'userID', type: COLUMN_TYPES.NUMBER }
   ]
 };
 const restrictionGroupTableInfo = {
@@ -116,4 +117,4 @@ const singletonDataTableInfo = {
   ]
 };
 
-module.exports = {userTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, imageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo}
+module.exports = {userTableInfo, sessionTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, imageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo}

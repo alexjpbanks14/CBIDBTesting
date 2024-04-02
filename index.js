@@ -216,16 +216,12 @@ app.post('/create_user', (req, res, next) => {
     res.sendStatus(401)
     return
   }
-  console.log(req.body);
-  console.log(password);
   connection.query("SELECT userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
     if(results.length > 0){
       res.json({result: "USER EXISTS"})
       return
     }
     bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
-      console.log(hash);
-      console.log(username);
         const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
         connection.query(query, [username, hash], (err, results) => {
         if(err){
@@ -243,14 +239,11 @@ console.log(config.saltRounds);
 app.post('/change_password', (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password).replace("\g ", "");
-  console.log(req.body)
-  console.log(password)
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
   }
   if(!checkPassword(password)){
-    res.sendStatus(400)
     res.json({
       result: "BADPASS"
     })
@@ -258,17 +251,12 @@ app.post('/change_password', (req, res, next) => {
   }
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
     const query = "UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?;";
-    console.log(query);
-    console.log(hash)
-    console.log(username);
     connection.query(query, [hash, username], (err, results) => {
       if(err){
         next(err)
         return
       }
-      console.log(results)
       if(results.affectedRows == 0){
-        res.sendStatus(400)
         res.json({
           result: "FAIL"
         })
@@ -290,13 +278,20 @@ app.post('/login', (req, res, next) => {
       return
     }else{
       if(results.length > 0){
-        res.json({
-          uuid: uuidv4().length
+        bcrypt.compare(password, results[0]).then(result => {
+          if(result){
+            const uuid = uuidv4();
+            //connection.query("INSERT INTO " + session)
+            res.cookie("sessionUUID", uuid)
+            res.json({
+              result: "OK"
+            })
+          }else {
+            res.json({result: "BAD"})
+          }
         })
       }else{
-        res.sendStatus(400)
         res.json({result: "BAD"})
-        console.log("BUTT");
       }
     }
   })
