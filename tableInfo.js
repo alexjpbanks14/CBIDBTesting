@@ -22,7 +22,7 @@ const COLUMN_TYPES = {
 
 const userTableInfo = {
   tableName: 'USERS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(50) NOT NULL, passhash VARCHAR(31))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(50) NOT NULL, passhash VARCHAR(31), PRIMARY KEY(userID))',
   pk: 'userID',
   columns: [
     { key: 'userID', type: COLUMN_TYPES.NUMBER },
