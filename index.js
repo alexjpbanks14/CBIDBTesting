@@ -5,6 +5,7 @@ const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTab
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
 const { connection, app, upload, config, port } = require('./connection');
 const { v4: uuidv4 } = require('uuid');
+const { kMaxLength } = require('buffer');
 
 module.exports = {app, connection}
 
@@ -124,8 +125,6 @@ function logoImageDir(image_id, image_suffix){
   return '/home/alexb/server/CBIDBTesting/logoImages/image' + image_id + '.' + image_suffix;
 }
 
-connection.query("DROP TABLE USERS");
-
 const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
 
 app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res, next) => {
@@ -204,17 +203,25 @@ app.get('/jp_image', (req, res) => {
   res.sendFile(jp_image_dir);
 })
 
+function checkPassword(password){
+  return password.length > 6 && password.length < 30;
+}
+
 app.post('/create_user', (req, res, next) => {
+  const username = new String(req.username);
+  const password = new String(req.password);
   if(!checkPermission(req, res)){
     res.sendStatus(401)
     return
   }
-  connection.query("INSERT INTO " + userTableInfo.tableName + " (username) VALUES (?); SELECT * FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();", [req.username], (err, results) => {
-    if(err){
-      next(err)
-    }else{
-      res.json(parseResult(result, userTableInfo));
-    }
+  bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
+      connection.query("INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT (username, passhash) FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();", [username, hash], (err, results) => {
+      if(err){
+        next(err)
+      }else{
+        res.json(results[0]);
+      }
+    })
   })
 })
 
@@ -227,11 +234,12 @@ app.post('/change_password', (req, res, next) => {
     res.sendStatus(401)
     return
   }
-  if(password.length < 6){
+  if(!checkPassword(password)){
     res.sendStatus(400)
     return
   }
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
+    connection.query("UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?", [], (err, results))
     res.json({
       hash: hash 
     })
@@ -239,6 +247,16 @@ app.post('/change_password', (req, res, next) => {
 })
 
 app.post('/login', (req, res, next) => {
+  const username = new String(req.username);
+  const password = new String(req.password);
+  connection.query("SELECT passhash FROM " + userTableInfo.tableName + " WHERE username = ?;", [], (err, results) => {
+    if(err){
+      next(err)
+      return
+    }else{
+      
+    }
+  })
   res.json({
     uuid: uuidv4().length
   })
