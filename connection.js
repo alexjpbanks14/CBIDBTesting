@@ -12,6 +12,7 @@ exports.upload = upload;
 const app = express();
 const port = config.port;
 exports.port = port;
+console.log("connection.js");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 var allowedOrigins = ['http://localhost:8081',

@@ -174,6 +174,8 @@ app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res
   }
 });
 
+console.log("index.js");
+
 app.get('/images/:image_id/:image_version', (req, res, next) => {
   const imageID = parseInt(req.params.image_id);
   if(isNaN(imageID))
