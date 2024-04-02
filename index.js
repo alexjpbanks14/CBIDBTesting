@@ -228,7 +228,7 @@ app.post('/change_password', (req, res, next) => {
     res.sendStatus(400)
     return
   }
-  bcrypt.hash(password, config.saltRounds).then(hash => {
+  bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
     res.json({
       hash: hash 
     })
