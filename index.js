@@ -209,6 +209,8 @@ function checkPassword(password){
   return password.length > 6 && password.length < 30;
 }
 
+connection.query("DROP TABLE USERS", [], ()=>{});
+
 app.post('/create_user', (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password).replace("\g ", "");
@@ -260,7 +262,7 @@ app.post('/change_password', (req, res, next) => {
     const query = "UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?;";
     console.log(query);
     console.log(hash)
-    connection.query(query, ["ugh", "serious so stupid"], (err, results) => {
+    connection.query(query, ["ugh", hash], (err, results) => {
       if(err){
         next(err)
         return

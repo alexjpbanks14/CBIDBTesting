@@ -22,12 +22,12 @@ const COLUMN_TYPES = {
 
 const userTableInfo = {
   tableName: 'USERS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(50) NOT NULL, passhash VARCHAR(60), PRIMARY KEY(userID))',
+  createStatement: 'CREATE TABLE IF NOT EXISTS USERS(userID int NOT NULL AUTO_INCREMENT, username VARCHAR(100) NOT NULL, passhash VARCHAR(100), PRIMARY KEY(userID))',
   pk: 'userID',
   columns: [
     { key: 'userID', type: COLUMN_TYPES.NUMBER },
-    { key: 'username', type: COLUMN_TYPES.STRING(50) },
-    { key: 'passhash', type: COLUMN_TYPES.STRING(60) }
+    { key: 'username', type: COLUMN_TYPES.STRING(100) },
+    { key: 'passhash', type: COLUMN_TYPES.STRING(100) }
   ]
 };
 const sessionTableInfo = {
