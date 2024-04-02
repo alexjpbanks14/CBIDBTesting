@@ -79,7 +79,9 @@ function mergeRowsOTM(rowO, rowM, pkO, pkM, refName){
 }
 
 async function isLoggedIn(request){
+  console.log("HAP");
   await query("SELECT * FROM USERS WHERE username = ?",["derp"]).then((a) => {
+    console.log("WOOP")
     console.log(a);
   })
 }
