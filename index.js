@@ -302,9 +302,7 @@ app.post('/api/authenticate-staff', (req, res, next) => {
                 return
               }else{
                 res.cookie("sessionUUID", uuid)
-                res.json({
-                  success: true
-                })
+                res.json(true)
               }
             })
           }else {
