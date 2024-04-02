@@ -223,7 +223,7 @@ app.post('/create_user', (req, res, next) => {
     console.log(username);
       const query = "INSERT INTO " + userTableInfo.tableName + " (username) VALUES (?); SELECT (username, passhash) FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
       console.log(query)
-      connection.query(query, [username, hash], (err, results) => {
+      connection.query(query, [username], (err, results) => {
       if(err){
         next(err)
       }else{
