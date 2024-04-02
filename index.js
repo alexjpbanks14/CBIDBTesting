@@ -221,9 +221,9 @@ app.post('/create_user', (req, res, next) => {
   bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
     console.log(hash);
     console.log(username);
-      const query = "INSERT INTO " + userTableInfo.tableName + " (username) VALUES (?);";
+      const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?);";
       console.log(query)
-      connection.query(query, [username], (err, results) => {
+      connection.query(query, [username, hash], (err, results) => {
       if(err){
         next(err)
       }else{
