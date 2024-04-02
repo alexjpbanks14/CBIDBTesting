@@ -79,10 +79,13 @@ function mergeRowsOTM(rowO, rowM, pkO, pkM, refName){
 }
 
 async function isLoggedIn(request){
-  console.log("HAP");
-  await query("SELECT * FROM USERS WHERE username = ?",["derp"]).then((a) => {
-    console.log("WOOP")
-    console.log(a);
+  const sessionUUID = String(request.cookies.sessionUUID)
+  await query("SELECT active FROM " + sessionTableInfo.tableName + " WHERE sessionUUID = ?",[sessionUUID]).then((a) => {
+    if(a.length > 0){
+      return a[0].active
+    }else{
+      return false
+    }
   })
 }
 
