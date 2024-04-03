@@ -15,6 +15,11 @@ const COLUMN_TYPES = {
       return v == null ? null : String(v);
     }
   }),
+  DATETIME: {
+    SToV: (v) => {
+      return v
+    }
+  },
   BOOLEAN: {
     SToV: (v) => Boolean(v)
   }
@@ -32,15 +37,26 @@ const userTableInfo = {
 };
 const sessionTableInfo = {
   tableName: 'SESSIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionUUID VARCHAR(100) NOT NULL, userID int, active BOOLEAN, PRIMARY KEY(sessionID), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionUUID VARCHAR(300) NOT NULL, userID int, active BOOLEAN, createdOn DATETIME, PRIMARY KEY(sessionID), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
   pk: 'sessionID',
   columns: [
     { key: 'sessionID', type: COLUMN_TYPES.NUMBER },
-    { key: 'sessionUUID', type: COLUMN_TYPES.STRING(100) },
+    { key: 'sessionUUID', type: COLUMN_TYPES.STRING(300) },
+    { key: 'createdOn', type: COLUMN_TYPES.DATETIME },
     { key: 'active', type: COLUMN_TYPES.BOOLEAN },
     { key: 'userID', type: COLUMN_TYPES.NUMBER }
   ]
 };
+const permissionTableInfo = {
+  tableName: 'PERMISSIONS',
+  createStatement: 'CREATE TABLE IF NOT EXISTS PERMISSIONS(permissionID int NOT NULL AUTO_INCREMENT, permissionKey int, userID int, PRIMARY KEY(permissionID), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
+  pk: 'permissionID',
+  columns: [
+    { key: 'permissionID', type: COLUMN_TYPES.NUMBER },
+    { key: 'permissionKey', type: COLUMN_TYPES.NUMBER },
+    { key: 'userID', type: COLUMN_TYPES.NUMBER }
+  ]
+}
 const restrictionGroupTableInfo = {
   tableName: 'RESTRICTION_GROUPS',
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTION_GROUPS(groupID int NOT NULL AUTO_INCREMENT, title varchar(255), displayOrder int, PRIMARY KEY (groupID))',
@@ -117,4 +133,4 @@ const singletonDataTableInfo = {
   ]
 };
 
-module.exports = {userTableInfo, sessionTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, imageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo}
+module.exports = {userTableInfo, sessionTableInfo, permissionTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, imageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo}

@@ -1,17 +1,20 @@
 const axios = require('axios');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
-const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo } = require('./tableInfo');
+const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo, permissionTableInfo } = require('./tableInfo');
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
-const { connection, app, upload, config, port, query } = require('./connection');
+const { connection, app, upload, config, port, query, apiPrefix } = require('./connection');
 const { v4: uuidv4 } = require('uuid');
-const { kMaxLength } = require('buffer');
+var proxy = require('express-http-proxy');
+const { PERMISSIONS, getUserPermissions, checkPermission, getCurrentSession } = require('./permissions');
+const { randomBytes } = require('node:crypto');
 
 module.exports = {app, connection}
 
-function createTables(){
+function createTables() {
     connection.query(userTableInfo.createStatement);
     connection.query(sessionTableInfo.createStatement);
+    connection.query(permissionTableInfo.createStatement);
     connection.query(imageTableInfo.createStatement);
     connection.query(restrictionGroupTableInfo.createStatement);
     connection.query(restrictionTableInfo.createStatement);
@@ -38,23 +41,25 @@ async function getSunsetTime() {
   return lastSunset;
 }
 
-postTable(restrictionGroupTableInfo, '/restrictionGroup');
-postTable(restrictionTableInfo, '/restriction');
-postTable(logoImageTableInfo, '/logoImage');
-postTable(restrictionConditionTableInfo, '/restrictionCondition');
-postTable(singletonDataTableInfo, '/singletonData');
+postTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.UPDATE_RESTRICTION]);
+postTable(restrictionTableInfo, '/restriction', [PERMISSIONS.UPDATE_RESTRICTION]);
+postTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.UPDATE_IMAGE]);
+postTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.UPDATE_RESTRICTION]);
+postTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM]);
+postTable(permissionTableInfo, '/permissions', [PERMISSIONS.UPDATE_PERMISSIONS]);
 
-deleteTable(restrictionGroupTableInfo, '/restrictionGroup');
-deleteTable(restrictionTableInfo, '/restriction');
-deleteTable(logoImageTableInfo, '/logoImage');
-deleteTable(restrictionConditionTableInfo, '/restrictionCondition');
-deleteTable(singletonDataTableInfo, '/singletonData');
+deleteTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.DELETE_RESTRICTION]);
+deleteTable(restrictionTableInfo, '/restriction', [PERMISSIONS.DELETE_RESTRICTION]);
+deleteTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.DELETE_IMAGE]);
+deleteTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.DELETE_RESTRICTION]);
+deleteTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM]);
+deleteTable(permissionTableInfo, '/permissions', [PERMISSIONS.DELETE_PERMISSIONS]);
 
 const flagRegex = /".*"/
 
 const replaceRegex = new RegExp('\"', 'g');
 
-app.get('/flag-color', (req, res) => {
+app.get(apiPrefix + '/flag-color', (req, res) => {
   axios.get('https://api.community-boating.org/api/flag').then((axiosRes) => {
     const flagColor = String(axiosRes.data).match(flagRegex)[0].replace(replaceRegex, '');
     res.json({
@@ -65,31 +70,7 @@ app.get('/flag-color', (req, res) => {
   })
 });
 
-function mergeRowsOTM(rowO, rowM, pkO, pkM, refName){
-  var byPK = [];
-  rowM.forEach((a) => {
-    byPK[a[pkM]] = a;
-  });
-  return rowO.map((a) => {
-    const b = {...a};
-    delete b[pkO];
-    b[refName] = byPK[a[pkO]];
-    return b;
-  })
-}
-
-async function isLoggedIn(request){
-  const sessionUUID = String(request.cookies.sessionUUID)
-  await query("SELECT active FROM " + sessionTableInfo.tableName + " WHERE sessionUUID = ?",[sessionUUID]).then((a) => {
-    if(a.length > 0){
-      return a[0].active
-    }else{
-      return false
-    }
-  })
-}
-
-app.get('/fotv', async (req, res, next) => {
+app.get(apiPrefix + '/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
   connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';SELECT * FROM ' + singletonDataTableInfo.tableName + ';', [], (err, result) => {
     if(err)
@@ -114,7 +95,7 @@ const ap_image_dir = "/root/ap_image"
 const jp_image_dir = "/root/jp_image"
 
 function postImage(path, dir){
-  app.post(path, upload.single('image'), (req, res, next) => {
+  app.post(apiPrefix + path, upload.single('image'), (req, res, next) => {
     const image = req.file;
   
     if (!image) return res.sendStatus(400);
@@ -128,18 +109,15 @@ function postImage(path, dir){
   });
 }
 
-postImage('/ap_image', ap_image_dir);
-postImage('/jp_image', jp_image_dir);
-
 fs.mkdir('/root/logoImages', () => {})
 
 function logoImageDir(image_id, image_suffix){
-  return '/home/alexb/server/CBIDBTesting/logoImages/image' + image_id + '.' + image_suffix;
+  return config.imageDir + image_id + '.' + image_suffix;
 }
 
 const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
 
-app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res, next) => {
+app.post(apiPrefix + '/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res, next) => {
   const image = req.file;
   if (!image) return res.sendStatus(400);
 
@@ -186,9 +164,27 @@ app.post('/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res
   }
 });
 
+app.get(apiPrefix + "/users", async (req, res, next) => {
+  if(!await checkPermission(req, res, [PERMISSIONS.VIEW_USERS])){
+    res.sendStatus(401)
+    return
+  }
+  const users = await query("SELECT username, userID FROM " + userTableInfo.tableName + "", [])
+  res.json(users)
+})
+
+app.get(apiPrefix + "/permissions", async (req, res, next) => {
+  if(!await checkPermission(req, res, [PERMISSIONS.VIEW_PERMISSIONS])){
+    res.sendStatus(401)
+    return
+  }
+  const permissions = await query("SELECT * FROM " + permissionTableInfo.tableName + "", [])
+  res.json(permissions)
+})
+
 console.log("index.js");
 
-app.get('/images/:image_id/:image_version', (req, res, next) => {
+app.get(apiPrefix + '/images/:image_id/:image_version', (req, res, next) => {
   const imageID = parseInt(req.params.image_id);
   if(isNaN(imageID))
     return res.sendStatus(404);
@@ -205,26 +201,14 @@ app.get('/images/:image_id/:image_version', (req, res, next) => {
   })
 })
 
-function checkPermission(req, res) {
-  return true
-}
-
-app.get('/ap_image', (req, res) => {
-  res.sendFile(ap_image_dir);
-})
-
-app.get('/jp_image', (req, res) => {
-  res.sendFile(jp_image_dir);
-})
-
 function checkPassword(password){
   return password.length > 6 && password.length < 30;
 }
 
-app.post('/create_user', (req, res, next) => {
+app.post(apiPrefix + '/create_user', (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password).replace("\g ", "");
-  if(!checkPermission(req, res)){
+  if(!checkPermission(req, res, [])){
     res.sendStatus(401)
     return
   }
@@ -248,11 +232,10 @@ app.post('/create_user', (req, res, next) => {
 
 console.log(config.saltRounds);
 
-app.post('/change_password', (req, res, next) => {
-  isLoggedIn(req)
+app.post(apiPrefix + '/change_password', async (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password).replace("\g ", "");
-  if(!checkPermission(req, res)){
+  if(!await checkPermission(req, res, [])){
     res.sendStatus(401)
     return
   }
@@ -283,24 +266,25 @@ app.post('/change_password', (req, res, next) => {
   })
 })
 
-app.post('/api/authenticate-staff', (req, res, next) => {
+app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password);
-  connection.query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
+  connection.query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], async (err, results) => {
     if(err){
       next(err)
       return
     }else{
       if(results.length > 0){
-        bcrypt.compare(password, results[0].passhash).then(result => {
+        bcrypt.compare(password, results[0].passhash).then(async result => {
           if(result){
-            const uuid = uuidv4();
-            console.log(results[0].userID);
+            const decoder = new TextDecoder("UTF-16")
+            const uuid = decoder.decode(await randomBytes(256));
             connection.query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active) VALUES (?, ?, ?);", [results[0].userID, uuid, true], (err2, results2) => {
               if(err2){
                 next(err2)
                 return
               }else{
+                res.header("Access-Control-Allow-Credentials", true)
                 res.cookie("sessionUUID", uuid)
                 res.json(true)
               }
@@ -316,6 +300,46 @@ app.post('/api/authenticate-staff', (req, res, next) => {
   })
 })
 
+app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
+  const currentSession = await getCurrentSession(req);
+  console.log(currentSession);
+  if(currentSession.length > 0){
+    const currentUsername = await query("SELECT username FROM " + userTableInfo.tableName + " WHERE userID = ?", [currentSession[0].userID])
+    if(currentUsername.length > 0){
+      res.json({
+        value: currentUsername[0].username
+      })
+    }else{
+      res.json({
+        error: {
+          code: "access_den",
+          message: "Authentication failure."
+        }
+      })
+    }
+  }else{
+    res.json({
+      error: {
+        code: "access_denied",
+        message: "Authentication failure."
+      }
+    })
+  }
+})
+
+app.post(apiPrefix + "/logout", async (req, res, next) => {
+  await query("DELETE FROM " + sessionTableInfo.tableName + " WHERE sessionUUID = ? ", [req.cookies.sessionUUID])
+  res.json({result: "OK"})
+})
+
+app.get(apiPrefix + '/staff/user-permissions', async (req, res, next) => {
+  const a = await getUserPermissions(req)
+  console.log("what what")
+  res.json(a);
+});
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
+
+app.use('/', proxy("http://localhost:3000"))

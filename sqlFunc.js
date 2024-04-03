@@ -1,4 +1,5 @@
-const {app, connection} = require('./connection')
+const { app, connection, apiPrefix } = require('./connection');
+const { checkPermission } = require('./permissions');
 
 function updateRowsStatement(tableInfo, body, cb) {
   var values = [];
@@ -20,38 +21,46 @@ function updateRowsStatement(tableInfo, body, cb) {
 }
 
 function parseRow(row, tableInfo) {
-  const parsedRow = {};
+  const parsedRow = {}
   if (row == undefined)
-    return parsedRow;
+    return parsedRow
   tableInfo.columns.forEach((a) => {
-    parsedRow[a.key] = a.type.SToV(row[a.key]);
+    parsedRow[a.key] = a.type.SToV(row[a.key])
   });
-  return parsedRow;
+  return parsedRow
 }
 
 function parseResult(result, tableInfo) {
-  return result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo));
+  return result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo))
 }
 
-function postTable(tableInfo, path) {
-  app.post(path, (req, res, next) => {
+function postTable(tableInfo, path, permissions) {
+  app.post(apiPrefix + path, async (req, res, next) => {
+    if(!await checkPermission(req, res, permissions)){
+      res.sendStatus(401)
+      return
+    }
     console.log(req.body)
     const body = req.body;
     const cb = (err, result) => {
       if (err)
-        next(err);
-
+        next(err)
       else
-        res.json(parseResult(result, tableInfo)).end();
+        res.json(parseResult(result, tableInfo)).end()
     };
-    updateRowsStatement(tableInfo, body, cb);
+    updateRowsStatement(tableInfo, body, cb)
   });
 }
-function deleteTable(tableInfo, path) {
-  app.delete(path, (req, res, next) => {
-    const body = Array.isArray(req.body) ? req.body : [req.body];
-    var query = '';
-    var values = [];
+
+function deleteTable(tableInfo, path, permissions) {
+  app.delete(apiPrefix + path, async (req, res, next) => {
+    if(!await checkPermission(req, res, permissions)){
+      res.sendStatus(401)
+      return
+    }
+    const body = Array.isArray(req.body) ? req.body : [req.body]
+    var query = ''
+    var values = []
     body.forEach((a) => {
       query = query + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
       values.push(a[tableInfo.pk]);
