@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt');
 const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo, permissionTableInfo } = require('./tableInfo');
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
 const { connection, app, upload, config, port, query, apiPrefix } = require('./connection');
-const { v4: uuidv4 } = require('uuid');
 var proxy = require('express-http-proxy');
 const { PERMISSIONS, getUserPermissions, checkPermission, getCurrentSession } = require('./permissions');
 const { randomBytes } = require('node:crypto');
@@ -22,7 +21,7 @@ function createTables() {
     connection.query(restrictionConditionTableInfo.createStatement);
     connection.query(singletonDataTableInfo.createStatement);
 }
-
+//connection.query("DROP TABLE PERMISSIONS")
 createTables();
 
 var lastSunset = null;
@@ -46,14 +45,13 @@ postTable(restrictionTableInfo, '/restriction', [PERMISSIONS.UPDATE_RESTRICTION]
 postTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.UPDATE_IMAGE]);
 postTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.UPDATE_RESTRICTION]);
 postTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM]);
-postTable(permissionTableInfo, '/permissions', [PERMISSIONS.UPDATE_PERMISSIONS]);
 
 deleteTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.DELETE_RESTRICTION]);
 deleteTable(restrictionTableInfo, '/restriction', [PERMISSIONS.DELETE_RESTRICTION]);
 deleteTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.DELETE_IMAGE]);
 deleteTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.DELETE_RESTRICTION]);
 deleteTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM]);
-deleteTable(permissionTableInfo, '/permissions', [PERMISSIONS.DELETE_PERMISSIONS]);
+deleteTable(userTableInfo, '/users', [PERMISSIONS.DELETE_USER]);
 
 const flagRegex = /".*"/
 
@@ -88,7 +86,6 @@ app.get(apiPrefix + '/fotv', async (req, res, next) => {
   });
   //const restrictions = await db.collection(restrictionsCol).list();
   //const restrictionGroups = await db.collection(restrictionGroupsCol).list();
-  //console.log(restrictions.results[0].props);
 });
 
 const ap_image_dir = "/root/ap_image"
@@ -107,6 +104,19 @@ function postImage(path, dir){
         res.sendStatus(200);
     });
   });
+}
+
+//createUser("alexb", "password")
+
+//giveAllPermissions(8)
+
+async function giveAllPermissions(userid){
+  query("INSERT IGNORE INTO " + permissionTableInfo.tableName + " (userID, permissionKey) VALUES " + Object.values(PERMISSIONS).map((a) => "(?,?)").join(","), Object.values(PERMISSIONS).flatMap((a) => [userid, a]))
+}
+
+async function createUser(username, password){
+  const hash = await hashPass(password)
+  query("INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?)", [username, hash])
 }
 
 fs.mkdir('/root/logoImages', () => {})
@@ -137,8 +147,6 @@ app.post(apiPrefix + '/uploadImage/:imageId/:imageSuffix', upload.single('image'
           res.json(image_new[0]).end();
         }else {
           connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1, imageSuffix = ? WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [suffix, image_id, image_id], (err2, results) => {
-            console.log(results);
-            console.log(parseResult(results, imageTableInfo));
             if(err2)
               next(err2)
             else
@@ -182,8 +190,6 @@ app.get(apiPrefix + "/permissions", async (req, res, next) => {
   res.json(permissions)
 })
 
-console.log("index.js");
-
 app.get(apiPrefix + '/images/:image_id/:image_version', (req, res, next) => {
   const imageID = parseInt(req.params.image_id);
   if(isNaN(imageID))
@@ -201,41 +207,44 @@ app.get(apiPrefix + '/images/:image_id/:image_version', (req, res, next) => {
   })
 })
 
+app.post(apiPrefix + '/grant_permissions', async (req, res, next) => {
+  if(!await checkPermission(req, res, [PERMISSIONS.UPDATE_PERMISSIONS])){
+    res.sendStatus(401)
+    return
+  }
+  const permissions = req.body.permissions
+  const userID = req.body.userID
+  const results = await query("INSERT IGNORE INTO " + permissionTableInfo.tableName + " (userID, permissionKey) VALUES " + permissions.map((a) => "(?,?)").join(",") + ";SELECT * FROM " + permissionTableInfo.tableName + " WHERE userID = ?;", permissions.flatMap((a) => [userID, a]).concat(userID))
+  res.json(results[1])
+})
+
+app.post(apiPrefix + '/revoke_permissions', async (req, res, next) => {
+  if(!await checkPermission(req, res, [PERMISSIONS.DELETE_PERMISSIONS])){
+    res.sendStatus(401)
+    return
+  }
+  const permissions = req.body.permissions
+  const userID = req.body.userID
+  if(permissions.length == 0){
+    res.sendStatus(400)
+    return
+  }
+  const results = await query("DELETE FROM " + permissionTableInfo.tableName + " WHERE userID = ? AND (" + permissions.map((a) => "permissionKey = ?").join(" OR ") + ");SELECT * FROM " + permissionTableInfo.tableName + " WHERE userID = ?;", [userID].concat(permissions.map((a) => a)).concat(userID))
+  res.json(results[1])
+})
+
 function checkPassword(password){
   return password.length > 6 && password.length < 30;
 }
 
-app.post(apiPrefix + '/create_user', (req, res, next) => {
+async function hashPass(password){
+  return await bcrypt.hashSync(password, parseInt(config.saltRounds))
+}
+
+app.post(apiPrefix + '/create_user', async (req, res, next) => {
   const username = String(req.body.username);
   const password = String(req.body.password).replace("\g ", "");
-  if(!checkPermission(req, res, [])){
-    res.sendStatus(401)
-    return
-  }
-  connection.query("SELECT userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], (err, results) => {
-    if(results.length > 0){
-      res.json({result: "USER EXISTS"})
-      return
-    }
-    bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
-        const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
-        connection.query(query, [username, hash], (err, results) => {
-        if(err){
-          next(err)
-        }else{
-          res.json(results[1]);
-        }
-      })
-    })
-  })
-})
-
-console.log(config.saltRounds);
-
-app.post(apiPrefix + '/change_password', async (req, res, next) => {
-  const username = String(req.body.username);
-  const password = String(req.body.password).replace("\g ", "");
-  if(!await checkPermission(req, res, [])){
+  if(!await checkPermission(req, res, [PERMISSIONS.ADD_USER])){
     res.sendStatus(401)
     return
   }
@@ -245,30 +254,94 @@ app.post(apiPrefix + '/change_password', async (req, res, next) => {
     })
     return
   }
-  bcrypt.hash(password, parseInt(config.saltRounds)).then(hash => {
-    const query = "UPDATE " + userTableInfo.tableName + " SET passhash = ? WHERE username = ?;";
-    connection.query(query, [hash, username], (err, results) => {
-      console.log(results)
-      if(err){
-        next(err)
-        return
-      }
-      if(results.affectedRows == 0){
-        res.json({
-          result: "FAIL"
-        })
-        return
-      }
+  if(await doesUsernameExist(username)){
+    res.json({result: "USER EXISTS"})
+    return
+  }
+  const hash = await hashPass(password)
+    const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
+    connection.query(query, [username, hash], (err, results) => {
+    if(err){
+      next(err)
+    }else{
+      res.json(results[1][0]);
+    }
+  })
+})
+
+async function doesUsernameExist(username){
+  return (await query("SELECT userID FROM " + userTableInfo.tableName + " WHERE username = ?", [username])).length > 0
+}
+
+app.post(apiPrefix + '/update_user', async (req, res, next) => {
+  const username = String(req.body.username);
+  const password = String(req.body.password).replace("\g ", "");
+  const changedUsername = req.body.changedUsername;
+  const changedPassword = req.body.changedPassword;
+  const forceLogout = req.body.forceLogout;
+  const userID = req.body.userID;
+  if(forceLogout){
+    await query("UPDATE " + sessionTableInfo.tableName + " SET active = FALSE WHERE userID = ?", [userID])
+  }
+  if(!changedPassword && !changedUsername){
+    res.json({
+      result: "OK"
+    })
+  }
+  if(!await checkPermission(req, res, [])){
+    res.sendStatus(401)
+    return
+  }
+  if(changedPassword && !checkPassword(password)){
+    res.json({
+      result: "BADPASS"
+    })
+    return
+  }
+  var values = []
+  if(changedUsername){
+    if(await doesUsernameExist(username)){
       res.json({
-        result: "OK"
+        result: "USERNAME TAKEN"
       })
+      return
+    }
+    values.push(username)
+  }
+  if(changedPassword){
+    values.push(await hashPass(password))
+  }
+  values.push(userID)
+  connection.query("UPDATE " + userTableInfo.tableName + " SET " + (changedUsername ? "username = ? " : "") + ((changedUsername && changedPassword) ? "," : "") + (changedPassword ? "passhash = ? " : "") + " WHERE userID = ?;", values, (err, results) => {
+    if(err){
+      next(err)
+      return
+    }
+    if(results.affectedRows == 0){
+      res.json({
+        result: "FAIL"
+      })
+      return
+    }
+    res.json({
+      result: "OK"
     })
   })
 })
 
+app.post('/toggleRestriction', async (req, res, next) => {
+  if(!await checkPermission(req, res, [PERMISSIONS.TOGGLE_RESTRICTION])){
+    res.sendStatus(401)
+    return
+  }
+  const restrictionID = req.body.restrictionID
+  const active = req.body.active
+  res.json((await query("UPDATE " + restrictionTableInfo.tableName + " SET active = ? WHERE restrictionID = ?;SELECT * FROM " + restrictionTableInfo.tableName + " WHERE restrictionID = ?", [active, restrictionID, restrictionID]))[1][0])
+})
+
 app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
-  const username = String(req.body.username);
-  const password = String(req.body.password);
+  const username = String(req.body.username)
+  const password = String(req.body.password)
   connection.query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], async (err, results) => {
     if(err){
       next(err)
@@ -302,7 +375,6 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
 
 app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
   const currentSession = await getCurrentSession(req);
-  console.log(currentSession);
   if(currentSession.length > 0){
     const currentUsername = await query("SELECT username FROM " + userTableInfo.tableName + " WHERE userID = ?", [currentSession[0].userID])
     if(currentUsername.length > 0){
@@ -312,7 +384,7 @@ app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
     }else{
       res.json({
         error: {
-          code: "access_den",
+          code: "access_denied",
           message: "Authentication failure."
         }
       })
@@ -328,13 +400,12 @@ app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
 })
 
 app.post(apiPrefix + "/logout", async (req, res, next) => {
-  await query("DELETE FROM " + sessionTableInfo.tableName + " WHERE sessionUUID = ? ", [req.cookies.sessionUUID])
+  await query("UPDATE " + sessionTableInfo.tableName + " SET active = FALSE WHERE sessionUUID = ?", [req.cookies.sessionUUID])
   res.json({result: "OK"})
 })
 
 app.get(apiPrefix + '/staff/user-permissions', async (req, res, next) => {
   const a = await getUserPermissions(req)
-  console.log("what what")
   res.json(a);
 });
 
@@ -342,4 +413,4 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
 
-app.use('/', proxy("http://localhost:3000"))
+app.use('/', proxy(config.proxyURL))

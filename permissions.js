@@ -13,7 +13,9 @@ const PERMISSIONS = {
     VIEW_USERS: 8,
     VIEW_PERMISSIONS: 9,
     UPDATE_PERMISSIONS: 10,
-    DELETE_PERMISSIONS: 11
+    DELETE_PERMISSIONS: 11,
+    ADD_USER: 12,
+    DELETE_USER: 13
 }
 
 async function getCurrentSession(req){

@@ -49,7 +49,7 @@ const sessionTableInfo = {
 };
 const permissionTableInfo = {
   tableName: 'PERMISSIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS PERMISSIONS(permissionID int NOT NULL AUTO_INCREMENT, permissionKey int, userID int, PRIMARY KEY(permissionID), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS PERMISSIONS(permissionID int NOT NULL AUTO_INCREMENT, permissionKey int, userID int, PRIMARY KEY(permissionID), UNIQUE KEY (userID, permissionKey), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
   pk: 'permissionID',
   columns: [
     { key: 'permissionID', type: COLUMN_TYPES.NUMBER },
