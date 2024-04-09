@@ -1,7 +1,12 @@
 port = 6969
-imageTempDir = /home/alexb/tmp/uploads/
+imageDir = 
+imageTempDir = 
+apiPrefix = 
+proxyURL = 
+saltRounds =
+authDurationDays =
 [mysql]
-host = host
-user = user
-password = password
-database = database
+host = 
+user = 
+password = 
+database = 

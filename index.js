@@ -1,3 +1,4 @@
+const { handleError, sendUnauthorized } = require('./handleError');
 const axios = require('axios');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -70,56 +71,37 @@ app.get(apiPrefix + '/flag-color', (req, res) => {
 
 app.get(apiPrefix + '/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime();
-  connection.query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';SELECT * FROM ' + singletonDataTableInfo.tableName + ';', [], (err, result) => {
-    if(err)
-      next(err);
-    res.json({
-      sunset: sunset.toString(),
-      restrictions: result[0].map((a) => parseRow(a, restrictionTableInfo)),//adaptDBToJson(restrictions, restrictionsID), 
-      restrictionGroups: result[1].map((a) => parseRow(a, restrictionGroupTableInfo)),// adaptDBToJson(restrictionGroups, restrictionGroupsID),
-      logoImages: result[2].map((a) => parseRow(a, logoImageTableInfo)),
-      images: result[3].map((a) => parseRow(a, imageTableInfo)),
-      restrictionConditions: result[4].map((a) => parseRow(a, restrictionConditionTableInfo)),
-      singletonData: result[5].map((a) => parseRow(a, singletonDataTableInfo))
-      //activeProgramID: 0
-    }).end();
-  });
+  const result = await query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';SELECT * FROM ' + singletonDataTableInfo.tableName + ';', [])
+  .catch((e) => handleError(e, req, res))
+  res.json({
+    sunset: sunset.toString(),
+    restrictions: result[0].map((a) => parseRow(a, restrictionTableInfo)),//adaptDBToJson(restrictions, restrictionsID), 
+    restrictionGroups: result[1].map((a) => parseRow(a, restrictionGroupTableInfo)),// adaptDBToJson(restrictionGroups, restrictionGroupsID),
+    logoImages: result[2].map((a) => parseRow(a, logoImageTableInfo)),
+    images: result[3].map((a) => parseRow(a, imageTableInfo)),
+    restrictionConditions: result[4].map((a) => parseRow(a, restrictionConditionTableInfo)),
+    singletonData: result[5].map((a) => parseRow(a, singletonDataTableInfo))
+    //activeProgramID: 0
+  }).end();
   //const restrictions = await db.collection(restrictionsCol).list();
   //const restrictionGroups = await db.collection(restrictionGroupsCol).list();
 });
 
-const ap_image_dir = "/root/ap_image"
-const jp_image_dir = "/root/jp_image"
-
-function postImage(path, dir){
-  app.post(apiPrefix + path, upload.single('image'), (req, res, next) => {
-    const image = req.file;
-  
-    if (!image) return res.sendStatus(400);
-  
-    fs.rename(image.path, dir, (err) => {
-      if(err)
-        next(err);
-      else
-        res.sendStatus(200);
-    });
-  });
-}
-
 //createUser("alexb", "password")
 
-//giveAllPermissions(8)
+//giveAllPermissions(1)
 
 async function giveAllPermissions(userid){
-  query("INSERT IGNORE INTO " + permissionTableInfo.tableName + " (userID, permissionKey) VALUES " + Object.values(PERMISSIONS).map((a) => "(?,?)").join(","), Object.values(PERMISSIONS).flatMap((a) => [userid, a]))
+  await query("INSERT IGNORE INTO " + permissionTableInfo.tableName + " (userID, permissionKey) VALUES " + Object.values(PERMISSIONS).map((a) => "(?,?)").join(","), Object.values(PERMISSIONS).flatMap((a) => [userid, a]))
 }
 
 async function createUser(username, password){
   const hash = await hashPass(password)
-  query("INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?)", [username, hash])
+  await query("INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?)", [username, hash])
 }
 
-fs.mkdir('/root/logoImages', () => {})
+if(config.imageDir)
+  fs.mkdir(config.imageDir, () => {})
 
 function logoImageDir(image_id, image_suffix){
   return config.imageDir + image_id + '.' + image_suffix;
@@ -127,90 +109,73 @@ function logoImageDir(image_id, image_suffix){
 
 const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
 
-app.post(apiPrefix + '/uploadImage/:imageId/:imageSuffix', upload.single('image'), (req, res, next) => {
+app.post(apiPrefix + '/uploadImage/:imageId/:imageSuffix', upload.single('image'), async (req, res, next) => {
+  if(!checkPermission(req, res, [PERMISSIONS.UPDATE_IMAGE]))
+    return sendUnauthorized(req, res)
   const image = req.file;
-  if (!image) return res.sendStatus(400);
+  if (!image) return handleError({code: 400, message: "No Image"}, req, res)
 
   const suffix = req.params.imageSuffix;
 
   if(validSuffixes.findIndex((a) => a == suffix) == -1)
-    return res.sendStatus(400);
+    return handleError({code: 400, message: "Invalid Image Type", req, res})
 
-  const image_id_params = parseInt(req.params.imageId);
+  const image_id_params = parseInt(req.params.imageId)
 
-  const uploadImage = (image_id, image_new, isNew) => {
-    fs.rename(image.path, logoImageDir(image_id, suffix), (err) => {
-      if(err){
-        next(err);
-      }else{
-        if(isNew){
-          res.json(image_new[0]).end();
-        }else {
-          connection.query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1, imageSuffix = ? WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [suffix, image_id, image_id], (err2, results) => {
-            if(err2)
-              next(err2)
-            else
-              res.json(parseResult(results, imageTableInfo)[0]).end();
-          })
-        }
+  const uploadImage = async (image_id, image_new, isNew) => {
+    try{
+      await fs.renameSync(image.path, logoImageDir(image_id, suffix))
+      if(isNew){
+        res.json(image_new[0]).end()
+      }else {
+        const results = await query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1, imageSuffix = ? WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [suffix, image_id, image_id])
+        .catch((e) => handleError(e, req, res))
+        return res.json(parseResult(results[0], imageTableInfo)).end();
       }
-    });
+    }catch(e){
+      handleError(e, req, res)
+    }
   }
 
   if(isNaN(image_id_params) || image_id_params < 0){
-    updateRowsStatement(imageTableInfo, [{version: 0, imageSuffix: suffix}], (err, results) => {
-      if(err){
-        next(err)
-      }
-      else{
-        const res = parseResult(results, imageTableInfo);
-        uploadImage(res[0].imageID, res, true);
-      }
-    });
+    const results = parseResult(await (updateRowsStatement(imageTableInfo, [{version: 0, imageSuffix: suffix}]).catch(e => handleError(e, req, res))), imageTableInfo)
+        return await uploadImage(results[0].imageID, results, true);
   }else{
-    uploadImage(image_id_params, undefined, false);
+    return await uploadImage(image_id_params, undefined, false);
   }
 });
 
 app.get(apiPrefix + "/users", async (req, res, next) => {
   if(!await checkPermission(req, res, [PERMISSIONS.VIEW_USERS])){
-    res.sendStatus(401)
-    return
+    return sendUnauthorized(req, res)
   }
-  const users = await query("SELECT username, userID FROM " + userTableInfo.tableName + "", [])
+  const users = await query("SELECT username, userID FROM " + userTableInfo.tableName + "", []).catch(e => handleError(e, req, res))
   res.json(users)
 })
 
 app.get(apiPrefix + "/permissions", async (req, res, next) => {
   if(!await checkPermission(req, res, [PERMISSIONS.VIEW_PERMISSIONS])){
-    res.sendStatus(401)
+    sendUnauthorized(req, res)
     return
   }
   const permissions = await query("SELECT * FROM " + permissionTableInfo.tableName + "", [])
   res.json(permissions)
 })
 
-app.get(apiPrefix + '/images/:image_id/:image_version', (req, res, next) => {
+app.get(apiPrefix + '/images/:image_id/:image_version', async (req, res, next) => {
   const imageID = parseInt(req.params.image_id);
   if(isNaN(imageID))
     return res.sendStatus(404);
-  connection.query('SELECT imageSuffix FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?', [imageID], (err, results) => {
-    if(err){
-      next(err)
-    }else{
-      if(results.length == 0){
-        res.sendStatus(404);
-        return;
-      }
-      res.sendFile(logoImageDir(imageID, results[0].imageSuffix));
-    }
-  })
+  const results = await query('SELECT imageSuffix FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?', [imageID]).catch((e) => handleError(e))
+  if(results.length == 0){
+    return handleError({code: 404, message: "Image Not Found"}, req, res);
+  }
+  res.sendFile(logoImageDir(imageID, results[0].imageSuffix));
 })
 
 app.post(apiPrefix + '/grant_permissions', async (req, res, next) => {
   if(!await checkPermission(req, res, [PERMISSIONS.UPDATE_PERMISSIONS])){
-    res.sendStatus(401)
-    return
+    return sendUnauthorized(req, res)
   }
   const permissions = req.body.permissions
   const userID = req.body.userID
@@ -260,13 +225,8 @@ app.post(apiPrefix + '/create_user', async (req, res, next) => {
   }
   const hash = await hashPass(password)
     const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
-    connection.query(query, [username, hash], (err, results) => {
-    if(err){
-      next(err)
-    }else{
-      res.json(results[1][0]);
-    }
-  })
+    const results = await query(query, [username, hash])
+    res.json(results[1][0]);
 })
 
 async function doesUsernameExist(username){
@@ -281,7 +241,9 @@ app.post(apiPrefix + '/update_user', async (req, res, next) => {
   const forceLogout = req.body.forceLogout;
   const userID = req.body.userID;
   if(forceLogout){
-    await query("UPDATE " + sessionTableInfo.tableName + " SET active = FALSE WHERE userID = ?", [userID])
+    await query("UPDATE " + sessionTableInfo.tableName + " SET active = FALSE WHERE userID = ?", [userID]).catch((e) => {
+      handleError(e, req, res)
+    })
   }
   if(!changedPassword && !changedUsername){
     res.json({
@@ -289,7 +251,7 @@ app.post(apiPrefix + '/update_user', async (req, res, next) => {
     })
   }
   if(!await checkPermission(req, res, [])){
-    res.sendStatus(401)
+    handleError({code: 401, message: "Unauthorized"})
     return
   }
   if(changedPassword && !checkPassword(password)){
@@ -312,71 +274,60 @@ app.post(apiPrefix + '/update_user', async (req, res, next) => {
     values.push(await hashPass(password))
   }
   values.push(userID)
-  connection.query("UPDATE " + userTableInfo.tableName + " SET " + (changedUsername ? "username = ? " : "") + ((changedUsername && changedPassword) ? "," : "") + (changedPassword ? "passhash = ? " : "") + " WHERE userID = ?;", values, (err, results) => {
-    if(err){
-      next(err)
-      return
-    }
+  const results = query("UPDATE " + userTableInfo.tableName + " SET " + (changedUsername ? "username = ? " : "") + ((changedUsername && changedPassword) ? "," : "") + (changedPassword ? "passhash = ? " : "") + " WHERE userID = ?;", values)
+  .catch(e => handleError(e, req, res))
     if(results.affectedRows == 0){
-      res.json({
-        result: "FAIL"
-      })
-      return
+      return handleError({code: 400, message: "User Not Found"}, req, res)
     }
-    res.json({
-      result: "OK"
-    })
+  res.json({
+    result: "OK"
   })
 })
 
 app.post('/toggleRestriction', async (req, res, next) => {
   if(!await checkPermission(req, res, [PERMISSIONS.TOGGLE_RESTRICTION])){
-    res.sendStatus(401)
+    sendUnauthorized(req, res)
     return
   }
   const restrictionID = req.body.restrictionID
   const active = req.body.active
-  res.json((await query("UPDATE " + restrictionTableInfo.tableName + " SET active = ? WHERE restrictionID = ?;SELECT * FROM " + restrictionTableInfo.tableName + " WHERE restrictionID = ?", [active, restrictionID, restrictionID]))[1][0])
+  const result = await query("UPDATE " + restrictionTableInfo.tableName + " SET active = ? WHERE restrictionID = ?;SELECT * FROM " + restrictionTableInfo.tableName + " WHERE restrictionID = ?", [active, restrictionID, restrictionID]).catch(e => handleError(e, req, res))
+  return res.json(result[1][0])
 })
 
 app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
   const username = String(req.body.username)
   const password = String(req.body.password)
-  connection.query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username], async (err, results) => {
-    if(err){
-      next(err)
-      return
-    }else{
-      if(results.length > 0){
-        bcrypt.compare(password, results[0].passhash).then(async result => {
-          if(result){
-            const decoder = new TextDecoder("UTF-16")
-            const uuid = decoder.decode(await randomBytes(256));
-            connection.query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active) VALUES (?, ?, ?);", [results[0].userID, uuid, true], (err2, results2) => {
-              if(err2){
-                next(err2)
-                return
-              }else{
-                res.header("Access-Control-Allow-Credentials", true)
-                res.cookie("sessionUUID", uuid)
-                res.json(true)
-              }
-            })
-          }else {
-            res.json({result: "BAD"})
-          }
-        })
-      }else{
+  const resultSQL = await query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username])
+  .catch(e => handleError(e, req, res))
+  if(resultSQL.length > 0){
+    try{
+      const resultHash = await bcrypt.compareSync(password, resultSQL[0].passhash)
+      
+      if(resultHash){
+        const decoder = new TextDecoder("UTF-16")
+        const uuid = decoder.decode(await randomBytes(256));
+        await query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active, createdOn) VALUES (?, ?, ?, NOW());", [resultSQL[0].userID, uuid, true])
+        .catch(e => handleError(e, req, res))
+        res.header("Access-Control-Allow-Credentials", true)
+        res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
+        res.json(true)
+      }else {
         res.json({result: "BAD"})
       }
+    }catch(e){
+      return handleError(e, req, res)
     }
-  })
+  }else{
+    res.json({result: "BAD"})
+  }
 })
 
 app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
   const currentSession = await getCurrentSession(req);
-  if(currentSession.length > 0){
-    const currentUsername = await query("SELECT username FROM " + userTableInfo.tableName + " WHERE userID = ?", [currentSession[0].userID])
+  if(currentSession){
+    const currentUsername = await query("SELECT username FROM " + userTableInfo.tableName + " WHERE userID = ?", [currentSession.userID])
+    .catch(e => handleError(e, req, res))
     if(currentUsername.length > 0){
       res.json({
         value: currentUsername[0].username
@@ -401,6 +352,7 @@ app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
 
 app.post(apiPrefix + "/logout", async (req, res, next) => {
   await query("UPDATE " + sessionTableInfo.tableName + " SET active = FALSE WHERE sessionUUID = ?", [req.cookies.sessionUUID])
+  .catch(e => handleError(e, req, res))
   res.json({result: "OK"})
 })
 
@@ -411,6 +363,25 @@ app.get(apiPrefix + '/staff/user-permissions', async (req, res, next) => {
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
+})
+
+app.get(apiPrefix + '/testerror', async (req, res, next) => {
+    const b = await query("SELECT * FROM USERS WHERE usertype = ?;", []).catch((e) => {
+      //console.log(e.sql)
+      
+      //res.sendStatus(500)
+    })
+})
+
+app.use((err, req, res, next) => {
+  console.log("RUNNING")
+  const status = err.status || 500
+  const message = err.message || 'Internal Server Error'
+  res.status(status).json({
+    success: false,
+    status: status,
+    message: message
+  })
 })
 
 app.use('/', proxy(config.proxyURL))

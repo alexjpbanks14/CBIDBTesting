@@ -1,9 +1,10 @@
-const { app, connection, apiPrefix } = require('./connection');
+const { app, apiPrefix, query } = require('./connection');
+const { handleError, sendUnauthorized } = require('./handleError');
 const { checkPermission } = require('./permissions');
 
-function updateRowsStatement(tableInfo, body, cb) {
+function updateRowsStatement(tableInfo, body) {
   var values = [];
-  const query = body.map(bn => {
+  const queryS = body.map(bn => {
     const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
     const activeColumnsNotPK = activeColumns.filter((a) => a.key != tableInfo.pk);
     var queryI = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i + 1 < activeColumns.length ? ',' : '')), '') +
@@ -16,8 +17,8 @@ function updateRowsStatement(tableInfo, body, cb) {
       queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = LAST_INSERT_ID();";
     }
     return queryI;
-  }).reduce((a, b) => a + b, '');
-  connection.query(query, values, cb);
+  }).reduce((a, b) => a + b, '')
+  return query(queryS, values)
 }
 
 function parseRow(row, tableInfo) {
@@ -31,50 +32,43 @@ function parseRow(row, tableInfo) {
 }
 
 function parseResult(result, tableInfo) {
+  console.log(result)
+  console.log("voop")
   return result.filter((a, i) => i % 2 == 1).map((a) => parseRow(a[0], tableInfo))
 }
 
-function postTable(tableInfo, path, permissions) {
+async function postTable(tableInfo, path, permissions) {
   app.post(apiPrefix + path, async (req, res, next) => {
     if(!await checkPermission(req, res, permissions)){
-      res.sendStatus(401)
-      return
+      return sendUnauthorized(req, res)
     }
-    console.log(req.body)
-    const body = req.body;
-    const cb = (err, result) => {
-      if (err)
-        next(err)
-      else
-        res.json(parseResult(result, tableInfo)).end()
-    };
-    updateRowsStatement(tableInfo, body, cb)
+    const body = req.body
+    const result = await (updateRowsStatement(tableInfo, body).catch((e) => {
+      handleError(e, req, res)
+    }))
+    console.log("RESULT:")
+    console.log(result)
+    return res.json(parseResult(result, tableInfo))
   });
 }
 
-function deleteTable(tableInfo, path, permissions) {
-  app.delete(apiPrefix + path, async (req, res, next) => {
+async function deleteTable(tableInfo, path, permissions) {
+  await app.delete(apiPrefix + path, async (req, res, next) => {
     if(!await checkPermission(req, res, permissions)){
-      res.sendStatus(401)
-      return
+      return sendUnauthorized(req, res)
     }
     const body = Array.isArray(req.body) ? req.body : [req.body]
-    var query = ''
+    var queryS = ''
     var values = []
     body.forEach((a) => {
-      query = query + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
+      queryS = queryS + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
       values.push(a[tableInfo.pk]);
     });
-    console.log(body);
-    console.log(query);
-    console.log(values);
-    connection.query(query, values, (err, result) => {
-      if (err)
-        next(err);
-
-      else
-        res.json({ result: 'ok' }).end();
-    });
+    await query(queryS, values).catch((e) => handleError(e, req, res, next))
+    res.json({
+      success: true,
+      result: "OK"
+    })
   });
 }
 module.exports = {postTable, deleteTable, parseResult, parseRow, updateRowsStatement}

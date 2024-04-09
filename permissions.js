@@ -1,5 +1,6 @@
-const { query } = require('./connection')
+const { query, config } = require('./connection')
 const { sessionTableInfo, permissionTableInfo } = require('./tableInfo')
+const { handleError } = require('./handleError')
 
 const PERMISSIONS = {
     DELETE_RESTRICTION: 0,
@@ -20,22 +21,27 @@ const PERMISSIONS = {
 
 async function getCurrentSession(req){
     const sessionUUID = String(req.cookies.sessionUUID)
-    return await query("SELECT userID FROM " + sessionTableInfo.tableName + " WHERE sessionUUID = ? AND active = TRUE",[sessionUUID])
+    const session = await query("SELECT * FROM " + sessionTableInfo.tableName + " WHERE sessionUUID = ? AND active = TRUE", [sessionUUID])
+    if(session.length > 0 && ((new Date() - session[0].createdOn) / 1000 / 60 / 60 / 24) < parseInt(config.authDurationDays))
+        return session[0]
+    return undefined
 }
 
 async function checkPermission(req, res, requiredPermissions) {
-    const permissions = await getUserPermissions(req)
+    const permissions = await getUserPermissions(req).catch((e) => {
+        handleError(e, req, res)
+    })
     var hasIt = true
     requiredPermissions.forEach((a) => {
-      hasIt = hasIt && permissions.find((b) => a == b)
+      hasIt = (hasIt && (permissions.find((b) => a == b) != undefined))
     })
     return hasIt
 }
 
 async function getUserPermissions(request){
     const currentSession = await getCurrentSession(request)
-    if(currentSession.length > 0){
-      const permissions = await query("SELECT permissionKey FROM " + permissionTableInfo.tableName + " WHERE userID = ?", [currentSession[0].userID])
+    if(currentSession){
+      const permissions = await query("SELECT permissionKey FROM " + permissionTableInfo.tableName + " WHERE userID = ?", [currentSession.userID])
       return permissions.map((a) => a.permissionKey)
     }else{
       return []
