@@ -1,22 +1,22 @@
-const { app, apiPrefix, query } = require('./connection');
-const { handleError, sendUnauthorized } = require('./handleError');
-const { checkPermission } = require('./permissions');
+const { app, apiPrefix, query } = require('./connection')
+const { handleError, sendUnauthorized } = require('./handleError')
+const { checkPermission } = require('./permissions')
 
 function updateRowsStatement(tableInfo, body) {
-  var values = [];
+  var values = []
   const queryS = body.map(bn => {
-    const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key);
-    const activeColumnsNotPK = activeColumns.filter((a) => a.key != tableInfo.pk);
+    const activeColumns = tableInfo.columns.filter((a) => bn[a.key] !== undefined).map((a) => a.key)
+    const activeColumnsNotPK = activeColumns.filter((a) => a.key != tableInfo.pk)
     var queryI = "INSERT INTO " + tableInfo.tableName + " (" + activeColumns.reduce((a, b, i) => (a + " " + b + (i + 1 < activeColumns.length ? ',' : '')), '') +
-      ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i + 1 < activeColumns.length ? ',' : '')), '') + ')';
-    values = values.concat(activeColumns.map((a) => bn[a]));
+      ') VALUES (' + activeColumns.reduce((a, b, i) => (a + " ?" + (i + 1 < activeColumns.length ? ',' : '')), '') + ')'
+    values = values.concat(activeColumns.map((a) => bn[a]))
     if (bn[tableInfo.pk]) {
-      values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk]]);
-      queryI = queryI + " ON DUPLICATE KEY UPDATE " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i + 1 < activeColumnsNotPK.length ? ',' : '')), '') + ';SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
+      values = values.concat(activeColumnsNotPK.map((a) => bn[a])).concat([bn[tableInfo.pk]])
+      queryI = queryI + " ON DUPLICATE KEY UPDATE " + activeColumnsNotPK.reduce((a, b, i) => (a + " " + b + " = ?" + (i + 1 < activeColumnsNotPK.length ? ',' : '')), '') + ';SELECT * FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;'
     } else {
-      queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = LAST_INSERT_ID();";
+      queryI = queryI + ";SELECT * FROM " + tableInfo.tableName + " WHERE " + tableInfo.pk + " = LAST_INSERT_ID();"
     }
-    return queryI;
+    return queryI
   }).reduce((a, b) => a + b, '')
   return query(queryS, values)
 }
@@ -27,7 +27,7 @@ function parseRow(row, tableInfo) {
     return parsedRow
   tableInfo.columns.forEach((a) => {
     parsedRow[a.key] = a.type.SToV(row[a.key])
-  });
+  })
   return parsedRow
 }
 
@@ -49,7 +49,7 @@ async function postTable(tableInfo, path, permissions) {
     console.log("RESULT:")
     console.log(result)
     return res.json(parseResult(result, tableInfo))
-  });
+  })
 }
 
 async function deleteTable(tableInfo, path, permissions) {
@@ -61,15 +61,15 @@ async function deleteTable(tableInfo, path, permissions) {
     var queryS = ''
     var values = []
     body.forEach((a) => {
-      queryS = queryS + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;';
-      values.push(a[tableInfo.pk]);
-    });
+      queryS = queryS + 'DELETE FROM ' + tableInfo.tableName + ' WHERE ' + tableInfo.pk + ' = ?;'
+      values.push(a[tableInfo.pk])
+    })
     await query(queryS, values).catch((e) => handleError(e, req, res, next))
     res.json({
       success: true,
       result: "OK"
     })
-  });
+  })
 }
 module.exports = {postTable, deleteTable, parseResult, parseRow, updateRowsStatement}
 

@@ -7,12 +7,12 @@ const COLUMN_TYPES = {
   },
   STRING: (l) => ({
     SToV: (v) => {
-      return String(v);
+      return String(v)
     }
   }),
   STRING_NULL: (l) => ({
     SToV: (v) => {
-      return v == null ? null : String(v);
+      return v == null ? null : String(v)
     }
   }),
   DATETIME: {
@@ -34,19 +34,19 @@ const userTableInfo = {
     { key: 'username', type: COLUMN_TYPES.STRING(100) },
     { key: 'passhash', type: COLUMN_TYPES.STRING(100) }
   ]
-};
+}
 const sessionTableInfo = {
   tableName: 'SESSIONS',
-  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionUUID VARCHAR(300) NOT NULL, userID int, active BOOLEAN, createdOn DATETIME, PRIMARY KEY(sessionID), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
+  createStatement: 'CREATE TABLE IF NOT EXISTS SESSIONS(sessionID int NOT NULL AUTO_INCREMENT, sessionUUID VARCHAR(600) NOT NULL, userID int, active BOOLEAN, createdOn DATETIME, PRIMARY KEY(sessionID), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
   pk: 'sessionID',
   columns: [
     { key: 'sessionID', type: COLUMN_TYPES.NUMBER },
-    { key: 'sessionUUID', type: COLUMN_TYPES.STRING(300) },
+    { key: 'sessionUUID', type: COLUMN_TYPES.STRING(600) },
     { key: 'createdOn', type: COLUMN_TYPES.DATETIME },
     { key: 'active', type: COLUMN_TYPES.BOOLEAN },
     { key: 'userID', type: COLUMN_TYPES.NUMBER }
   ]
-};
+}
 const permissionTableInfo = {
   tableName: 'PERMISSIONS',
   createStatement: 'CREATE TABLE IF NOT EXISTS PERMISSIONS(permissionID int NOT NULL AUTO_INCREMENT, permissionKey int, userID int, PRIMARY KEY(permissionID), UNIQUE KEY (userID, permissionKey), FOREIGN KEY (userID) REFERENCES USERS(userID) ON DELETE CASCADE)',
@@ -66,7 +66,7 @@ const restrictionGroupTableInfo = {
     { key: 'title', type: COLUMN_TYPES.STRING(255) },
     { key: 'displayOrder', type: COLUMN_TYPES.NUMBER }
   ]
-};
+}
 const restrictionTableInfo = {
   tableName: 'RESTRICTIONS',
   createStatement: 'CREATE TABLE IF NOT EXISTS RESTRICTIONS(restrictionID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), message varchar(500), groupID int, active BOOLEAN, textColor varchar(10), backgroundColor varchar(10), fontWeight varchar(30), displayOrder int, isPriority BOOLEAN, PRIMARY KEY (restrictionID), FOREIGN KEY(groupID) REFERENCES RESTRICTION_GROUPS(groupID) ON DELETE CASCADE, FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
@@ -84,7 +84,7 @@ const restrictionTableInfo = {
     { key: 'displayOrder', type: COLUMN_TYPES.NUMBER },
     { key: 'isPriority', type: COLUMN_TYPES.BOOLEAN }
   ]
-};
+}
 const logoImageTableInfo = {
   tableName: 'LOGO_IMAGES',
   createStatement: 'CREATE TABLE IF NOT EXISTS LOGO_IMAGES(logoImageID int NOT NULL AUTO_INCREMENT, imageID int, title varchar(255), displayOrder int, imageType int, imageVersion int, PRIMARY KEY (logoImageID), FOREIGN KEY(imageID) REFERENCES IMAGES(imageID) ON DELETE CASCADE)',
@@ -96,7 +96,7 @@ const logoImageTableInfo = {
     { key: 'displayOrder', type: COLUMN_TYPES.NUMBER },
     { key: 'imageType', type: COLUMN_TYPES.NUMBER },
   ]
-};
+}
 const imageTableInfo = {
   tableName: 'IMAGES',
   createStatement: 'CREATE TABLE IF NOT EXISTS IMAGES(imageID int NOT NULL AUTO_INCREMENT, imageSuffix varchar(20), version int, PRIMARY KEY (imageID))',
@@ -106,7 +106,7 @@ const imageTableInfo = {
     { key: 'imageSuffix', type: COLUMN_TYPES.STRING(20) },
     { key: 'version', type: COLUMN_TYPES.NUMBER }
   ]
-};
+}
 //Action: Enable, Disable, Toggle
 //Type: Time, State
 //Info
@@ -122,7 +122,7 @@ const restrictionConditionTableInfo = {
     { key: 'conditionType', type: COLUMN_TYPES.NUMBER_NULL },
     { key: 'conditionInfo', type: COLUMN_TYPES.STRING_NULL(2000) }
   ]
-};
+}
 const singletonDataTableInfo = {
   tableName: 'SINGLETON_DATA',
   createStatement: 'CREATE TABLE IF NOT EXISTS SINGLETON_DATA(data_key VARCHAR(40) NOT NULL, value VARCHAR(100), PRIMARY KEY(data_key))',
@@ -131,6 +131,6 @@ const singletonDataTableInfo = {
     { key: "data_key", type: COLUMN_TYPES.STRING(40) },
     { key: "value", type: COLUMN_TYPES.STRING_NULL(100) }
   ]
-};
+}
 
 module.exports = {userTableInfo, sessionTableInfo, permissionTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, imageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo}

@@ -5,6 +5,7 @@ apiPrefix =
 proxyURL = 
 saltRounds =
 authDurationDays =
+authSessionUUIDBytes =
 [mysql]
 host = 
 user = 

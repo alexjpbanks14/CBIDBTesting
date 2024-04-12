@@ -10,4 +10,4 @@ httpProxy.createProxyServer({
     //passphrase: 'password',
   },
   changeOrigin: true,
-}).listen(5000);
+}).listen(5000)

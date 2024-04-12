@@ -1,76 +1,83 @@
-const { handleError, sendUnauthorized } = require('./handleError');
-const axios = require('axios');
-const fs = require('fs');
-const bcrypt = require('bcrypt');
-const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo, permissionTableInfo } = require('./tableInfo');
-const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc');
-const { connection, app, upload, config, port, query, apiPrefix } = require('./connection');
-var proxy = require('express-http-proxy');
-const { PERMISSIONS, getUserPermissions, checkPermission, getCurrentSession } = require('./permissions');
-const { randomBytes } = require('node:crypto');
+const { handleError, sendUnauthorized } = require('./handleError')
+const axios = require('axios')
+const fs = require('fs')
+const bcrypt = require('bcrypt')
+const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo, permissionTableInfo } = require('./tableInfo')
+const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc')
+const { connection, app, upload, config, port, query, apiPrefix } = require('./connection')
+var proxy = require('express-http-proxy')
+const { PERMISSIONS, getUserPermissions, getUserPermissionsM, checkPermission, checkPermissionM, getCurrentSession } = require('./permissions')
+const { randomBytes } = require('node:crypto')
 
 module.exports = {app, connection}
 
-function createTables() {
-    connection.query(userTableInfo.createStatement);
-    connection.query(sessionTableInfo.createStatement);
-    connection.query(permissionTableInfo.createStatement);
-    connection.query(imageTableInfo.createStatement);
-    connection.query(restrictionGroupTableInfo.createStatement);
-    connection.query(restrictionTableInfo.createStatement);
-    connection.query(logoImageTableInfo.createStatement);
-    connection.query(restrictionConditionTableInfo.createStatement);
-    connection.query(singletonDataTableInfo.createStatement);
+async function createTables() {
+    await query(userTableInfo.createStatement)
+    await query(sessionTableInfo.createStatement)
+    await query(permissionTableInfo.createStatement)
+    await query(imageTableInfo.createStatement)
+    await query(restrictionGroupTableInfo.createStatement)
+    await query(restrictionTableInfo.createStatement)
+    await query(logoImageTableInfo.createStatement)
+    await query(restrictionConditionTableInfo.createStatement)
+    await query(singletonDataTableInfo.createStatement)
 }
-//connection.query("DROP TABLE PERMISSIONS")
-createTables();
 
-var lastSunset = null;
-var lastTime = new Date();
+async function doPurge(){
+  await query("DROP DATABASE cbidbtesting; CREATE DATABASE cbidbtesting; USE cbidbtesting")
+  await createTables()
+  await createUser('tester', 'testpassword')
+  await giveAllPermissions(1)
+}
+
+doPurge()
+
+var lastSunset = null
+var lastTime = new Date()
 
 async function getSunsetTime() {
-  if(lastSunset == null || Math.abs((lastTime.getTime() - new Date().getTime()) >= 4 * 60 * 60)){
-    const axiosRes = await axios.get('https://api.sunrise-sunset.org/json?lat=42.3598986&lng=-71.0730733&formatted=0');
-    const time = new Date(axiosRes.data.results.sunset);
-    lastSunset = time;//timeInUTC.utcOffset(-5);
+  if(lastSunset == null || (Math.abs(lastTime.getTime() - new Date().getTime()) >= 4 * 60 * 60 * 1000)){
+    const axiosRes = await axios.get('https://api.sunrise-sunset.org/json?lat=42.3598986&lng=-71.0730733&formatted=0')
+    const time = new Date(axiosRes.data.results.sunset)
+    lastSunset = time;//timeInUTC.utcOffset(-5)
     //if(lastSunset.isDST()){
-    //  lastSunset = lastSunset.add(1, 'hour');
+    //  lastSunset = lastSunset.add(1, 'hour')
     //}
-    lastTime = new Date();
+    lastTime = new Date()
   }
-  return lastSunset;
+  return lastSunset
 }
 
-postTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.UPDATE_RESTRICTION]);
-postTable(restrictionTableInfo, '/restriction', [PERMISSIONS.UPDATE_RESTRICTION]);
-postTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.UPDATE_IMAGE]);
-postTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.UPDATE_RESTRICTION]);
-postTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM]);
+postTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.UPDATE_RESTRICTION])
+postTable(restrictionTableInfo, '/restriction', [PERMISSIONS.UPDATE_RESTRICTION])
+postTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.UPDATE_IMAGE])
+postTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.UPDATE_RESTRICTION])
+postTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM])
 
-deleteTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.DELETE_RESTRICTION]);
-deleteTable(restrictionTableInfo, '/restriction', [PERMISSIONS.DELETE_RESTRICTION]);
-deleteTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.DELETE_IMAGE]);
-deleteTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.DELETE_RESTRICTION]);
-deleteTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM]);
-deleteTable(userTableInfo, '/users', [PERMISSIONS.DELETE_USER]);
+deleteTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.DELETE_RESTRICTION])
+deleteTable(restrictionTableInfo, '/restriction', [PERMISSIONS.DELETE_RESTRICTION])
+deleteTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.DELETE_IMAGE])
+deleteTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS.DELETE_RESTRICTION])
+deleteTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM])
+deleteTable(userTableInfo, '/users', [PERMISSIONS.DELETE_USER])
 
 const flagRegex = /".*"/
 
-const replaceRegex = new RegExp('\"', 'g');
+const replaceRegex = new RegExp('\"', 'g')
 
 app.get(apiPrefix + '/flag-color', (req, res) => {
   axios.get('https://api.community-boating.org/api/flag').then((axiosRes) => {
-    const flagColor = String(axiosRes.data).match(flagRegex)[0].replace(replaceRegex, '');
+    const flagColor = String(axiosRes.data).match(flagRegex)[0].replace(replaceRegex, '')
     res.json({
       flagColor: flagColor
-    }).end();
+    }).end()
   }).catch((e) => {
-    throw e;
+    throw e
   })
-});
+})
 
 app.get(apiPrefix + '/fotv', async (req, res, next) => {
-  const sunset = await getSunsetTime();
+  const sunset = await getSunsetTime()
   const result = await query('SELECT * FROM ' + restrictionTableInfo.tableName + ';SELECT * FROM ' + restrictionGroupTableInfo.tableName + ';SELECT * FROM ' + logoImageTableInfo.tableName + ';SELECT * FROM ' + imageTableInfo.tableName + ';SELECT * FROM ' + restrictionConditionTableInfo.tableName + ';SELECT * FROM ' + singletonDataTableInfo.tableName + ';', [])
   .catch((e) => handleError(e, req, res))
   res.json({
@@ -82,10 +89,10 @@ app.get(apiPrefix + '/fotv', async (req, res, next) => {
     restrictionConditions: result[4].map((a) => parseRow(a, restrictionConditionTableInfo)),
     singletonData: result[5].map((a) => parseRow(a, singletonDataTableInfo))
     //activeProgramID: 0
-  }).end();
-  //const restrictions = await db.collection(restrictionsCol).list();
-  //const restrictionGroups = await db.collection(restrictionGroupsCol).list();
-});
+  }).end()
+  //const restrictions = await db.collection(restrictionsCol).list()
+  //const restrictionGroups = await db.collection(restrictionGroupsCol).list()
+})
 
 //createUser("alexb", "password")
 
@@ -104,18 +111,18 @@ if(config.imageDir)
   fs.mkdir(config.imageDir, () => {})
 
 function logoImageDir(image_id, image_suffix){
-  return config.imageDir + image_id + '.' + image_suffix;
+  return config.imageDir + image_id + '.' + image_suffix
 }
 
-const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif'];
+const validSuffixes = ['img', 'svg', 'webp', 'jpeg', 'jpg', 'png', 'gif']
 
 app.post(apiPrefix + '/uploadImage/:imageId/:imageSuffix', upload.single('image'), async (req, res, next) => {
   if(!checkPermission(req, res, [PERMISSIONS.UPDATE_IMAGE]))
     return sendUnauthorized(req, res)
-  const image = req.file;
+  const image = req.file
   if (!image) return handleError({code: 400, message: "No Image"}, req, res)
 
-  const suffix = req.params.imageSuffix;
+  const suffix = req.params.imageSuffix
 
   if(validSuffixes.findIndex((a) => a == suffix) == -1)
     return handleError({code: 400, message: "Invalid Image Type", req, res})
@@ -130,7 +137,7 @@ app.post(apiPrefix + '/uploadImage/:imageId/:imageSuffix', upload.single('image'
       }else {
         const results = await query('UPDATE ' + imageTableInfo.tableName + ' SET version = version + 1, imageSuffix = ? WHERE imageID = ?;SELECT * FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?;', [suffix, image_id, image_id])
         .catch((e) => handleError(e, req, res))
-        return res.json(parseResult(results[0], imageTableInfo)).end();
+        return res.json(parseResult(results[0], imageTableInfo)).end()
       }
     }catch(e){
       handleError(e, req, res)
@@ -139,11 +146,11 @@ app.post(apiPrefix + '/uploadImage/:imageId/:imageSuffix', upload.single('image'
 
   if(isNaN(image_id_params) || image_id_params < 0){
     const results = parseResult(await (updateRowsStatement(imageTableInfo, [{version: 0, imageSuffix: suffix}]).catch(e => handleError(e, req, res))), imageTableInfo)
-        return await uploadImage(results[0].imageID, results, true);
+        return await uploadImage(results[0].imageID, results, true)
   }else{
-    return await uploadImage(image_id_params, undefined, false);
+    return await uploadImage(image_id_params, undefined, false)
   }
-});
+})
 
 app.get(apiPrefix + "/users", async (req, res, next) => {
   if(!await checkPermission(req, res, [PERMISSIONS.VIEW_USERS])){
@@ -163,14 +170,14 @@ app.get(apiPrefix + "/permissions", async (req, res, next) => {
 })
 
 app.get(apiPrefix + '/images/:image_id/:image_version', async (req, res, next) => {
-  const imageID = parseInt(req.params.image_id);
+  const imageID = parseInt(req.params.image_id)
   if(isNaN(imageID))
-    return res.sendStatus(404);
+    return res.sendStatus(404)
   const results = await query('SELECT imageSuffix FROM ' + imageTableInfo.tableName + ' WHERE imageID = ?', [imageID]).catch((e) => handleError(e))
   if(results.length == 0){
-    return handleError({code: 404, message: "Image Not Found"}, req, res);
+    return handleError({code: 404, message: "Image Not Found"}, req, res)
   }
-  res.sendFile(logoImageDir(imageID, results[0].imageSuffix));
+  res.sendFile(logoImageDir(imageID, results[0].imageSuffix))
 })
 
 app.post(apiPrefix + '/grant_permissions', async (req, res, next) => {
@@ -199,7 +206,7 @@ app.post(apiPrefix + '/revoke_permissions', async (req, res, next) => {
 })
 
 function checkPassword(password){
-  return password.length > 6 && password.length < 30;
+  return password.length > 6 && password.length < 30
 }
 
 async function hashPass(password){
@@ -207,8 +214,8 @@ async function hashPass(password){
 }
 
 app.post(apiPrefix + '/create_user', async (req, res, next) => {
-  const username = String(req.body.username);
-  const password = String(req.body.password).replace("\g ", "");
+  const username = String(req.body.username)
+  const password = String(req.body.password).replace("\g ", "")
   if(!await checkPermission(req, res, [PERMISSIONS.ADD_USER])){
     res.sendStatus(401)
     return
@@ -224,9 +231,9 @@ app.post(apiPrefix + '/create_user', async (req, res, next) => {
     return
   }
   const hash = await hashPass(password)
-    const query = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();";
-    const results = await query(query, [username, hash])
-    res.json(results[1][0]);
+  const queryS = "INSERT INTO " + userTableInfo.tableName + " (username, passhash) VALUES (?, ?); SELECT username, userID FROM " + userTableInfo.tableName + " WHERE userID = LAST_INSERT_ID();"
+  const results = await query(queryS, [username, hash])
+  res.json(results[1][0])
 })
 
 async function doesUsernameExist(username){
@@ -234,12 +241,14 @@ async function doesUsernameExist(username){
 }
 
 app.post(apiPrefix + '/update_user', async (req, res, next) => {
-  const username = String(req.body.username);
-  const password = String(req.body.password).replace("\g ", "");
-  const changedUsername = req.body.changedUsername;
-  const changedPassword = req.body.changedPassword;
-  const forceLogout = req.body.forceLogout;
-  const userID = req.body.userID;
+  const username = String(req.body.username)
+  const password = String(req.body.password).replace("\g ", "")
+  const changedUsername = req.body.changedUsername
+  const changedPassword = req.body.changedPassword
+  const forceLogout = req.body.forceLogout
+  const userID = req.body.userID
+  const session = await getCurrentSession(req)
+  const permissions = await getUserPermissionsM(session)
   if(forceLogout){
     await query("UPDATE " + sessionTableInfo.tableName + " SET active = FALSE WHERE userID = ?", [userID]).catch((e) => {
       handleError(e, req, res)
@@ -250,7 +259,7 @@ app.post(apiPrefix + '/update_user', async (req, res, next) => {
       result: "OK"
     })
   }
-  if(!await checkPermission(req, res, [])){
+  if(!checkPermissionM(permissions, [(session && userID == session.userID) ? PERMISSIONS.CHANGE_OWN_PASSWORD : PERMISSIONS.MANAGE_USERS])){
     handleError({code: 401, message: "Unauthorized"})
     return
   }
@@ -302,15 +311,21 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
   .catch(e => handleError(e, req, res))
   if(resultSQL.length > 0){
     try{
-      const resultHash = await bcrypt.compareSync(password, resultSQL[0].passhash)
-      
-      if(resultHash){
-        const decoder = new TextDecoder("UTF-16")
-        const uuid = decoder.decode(await randomBytes(256));
-        await query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active, createdOn) VALUES (?, ?, ?, NOW());", [resultSQL[0].userID, uuid, true])
+      var passwordMatch = false
+      if(resultSQL[0].passhash == "NO_PASS")
+        passwordMatch = true
+      else
+        passwordMatch = await bcrypt.compareSync(password, resultSQL[0].passhash)
+      if(passwordMatch){
+        const decoder = new TextDecoder('UTF-8')
+        const bytes = await randomBytes(parseInt(config.authSessionUUIDBytes || "256"))
+        const uuid = decoder.decode(bytes)
+        const createSessionRes = await query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active, createdOn) VALUES (?, ?, ?, NOW());", [resultSQL[0].userID, uuid, true])
         .catch(e => handleError(e, req, res))
+        const newID = createSessionRes.insertId
         res.header("Access-Control-Allow-Credentials", true)
         res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
+        res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
         res.json(true)
       }else {
         res.json({result: "BAD"})
@@ -323,14 +338,19 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
   }
 })
 
-app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
-  const currentSession = await getCurrentSession(req);
-  if(currentSession){
-    const currentUsername = await query("SELECT username FROM " + userTableInfo.tableName + " WHERE userID = ?", [currentSession.userID])
+async function getCurrentUsername(currentSession){
+  const currentUsername = await query("SELECT username FROM " + userTableInfo.tableName + " WHERE userID = ?", [currentSession.userID])
     .catch(e => handleError(e, req, res))
-    if(currentUsername.length > 0){
+  return currentUsername.length == 0 ? undefined : currentUsername[0].username
+}
+
+app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
+  const currentSession = await getCurrentSession(req)
+  if(currentSession){
+    const currentUsername = await getCurrentUsername(currentSession)
+    if(currentUsername){
       res.json({
-        value: currentUsername[0].username
+        value: currentUsername
       })
     }else{
       res.json({
@@ -358,8 +378,8 @@ app.post(apiPrefix + "/logout", async (req, res, next) => {
 
 app.get(apiPrefix + '/staff/user-permissions', async (req, res, next) => {
   const a = await getUserPermissions(req)
-  res.json(a);
-});
+  res.json(a)
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
