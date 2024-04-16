@@ -14,14 +14,26 @@ exports.upload = upload
 const app = express()
 const port = config.port
 exports.port = port
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookies())
+
 var allowedOrigins = ['http://tv.community-boating.org:3001',
   'http://tv.community-boating.org']
+
 app.use(cors({
-  origin: allowedOrigins
+  origin: function(origin, callback){
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      var msg = 'The CORS policy for this site does not ' +
+                'allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
 }))
+
 exports.app = app
 const connection = mysql2.createConnection({
   multipleStatements: true,
