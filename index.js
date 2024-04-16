@@ -419,7 +419,7 @@ const redirectedAPIs = ['ap-class-instances',
 'jp-class-sections']
 
 for(const a in redirectedAPIs){
-  app.get(apiPrefix + '/' + a, (req, res) => {
+  app.get(apiPrefix + '/' + a + '/', (req, res) => {
     res.redirect('https://api.community-boating.org/api/' + a)
   })
 }
