@@ -312,6 +312,7 @@ app.post('/toggleRestriction', async (req, res, next) => {
 })
 
 app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
+  console.log("authenticating")
   const username = String(req.body.username)
   const password = String(req.body.password)
   const resultSQL = await query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username])
@@ -334,8 +335,10 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
         res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
         res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
         res.json(true)
+        console.log("sending good")
       }else {
         res.json({result: "BAD"})
+        console.log("sending bad")
       }
     }catch(e){
       return handleError(e, req, res)
