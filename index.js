@@ -415,6 +415,6 @@ app.use((err, req, res, next) => {
   })
 })
 
-app.use('/google', proxy('https://www.google.com'))
+app.use('/controller', proxy('http://localhost:3001'))
 
 app.use('/', proxy(config.proxyURL))
