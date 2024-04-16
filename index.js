@@ -415,8 +415,12 @@ app.use((err, req, res, next) => {
   })
 })
 
-app.use('/api/ap-class-instances', proxy("http://api.community-boating.org/api/ap-class-instances"))
+app.get('/api/ap-class-instances', (req, res) => {
+  res.redirect('https://api.community-boating.org/api/ap-class-instances')
+})
 
-app.use('/api/jp-class-sections', proxy("http://api.community-boating.org/api/jp-class-sections"))
+//app.use('/api/ap-class-instances/', proxy("https://api.community-boating.org"))
+
+//app.use('/api/jp-class-sections', proxy("https://api.community-boating.org/api/jp-class-sections"))
 
 app.use('/', proxy(config.proxyURL))
