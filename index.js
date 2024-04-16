@@ -415,9 +415,14 @@ app.use((err, req, res, next) => {
   })
 })
 
-app.get('/api/ap-class-instances', (req, res) => {
-  res.redirect('https://api.community-boating.org/api/ap-class-instances')
-})
+const redirectedAPIs = ['ap-class-instances',
+'jp-class-sections']
+
+for(const a in redirectedAPIs){
+  app.get(apiPrefix + '/' + a, (req, res) => {
+    res.redirect('https://api.community-boating.org/api/' + a)
+  })
+}
 
 //app.use('/api/ap-class-instances/', proxy("https://api.community-boating.org"))
 
