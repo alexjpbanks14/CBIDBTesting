@@ -2,7 +2,6 @@ const { handleError, sendUnauthorized } = require('./handleError')
 const axios = require('axios')
 const fs = require('fs')
 const bcrypt = require('bcrypt')
-const cors = require('cors')
 const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo, permissionTableInfo } = require('./tableInfo')
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc')
 const { connection, app, upload, config, port, query, apiPrefix } = require('./connection')
@@ -54,8 +53,6 @@ const corsOptions = {
 }
 
 //stupid github
-
-app.use(cors(corsOptions))
 
 postTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.UPDATE_RESTRICTION])
 postTable(restrictionTableInfo, '/restriction', [PERMISSIONS.UPDATE_RESTRICTION])
