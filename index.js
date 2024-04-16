@@ -30,6 +30,8 @@ async function doPurge(){
   await giveAllPermissions(1)
 }
 
+createTables()
+
 //doPurge()
 
 var lastSunset = null
