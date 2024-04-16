@@ -301,7 +301,7 @@ app.post(apiPrefix + '/update_user', async (req, res, next) => {
   })
 })
 
-app.post('/toggleRestriction', async (req, res, next) => {
+app.post(apiPrefix + '/toggleRestriction', async (req, res, next) => {
   if(!await checkPermission(req, res, [PERMISSIONS.TOGGLE_RESTRICTION])){
     sendUnauthorized(req, res)
     return
