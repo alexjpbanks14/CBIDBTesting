@@ -406,4 +406,4 @@ app.use((err, req, res, next) => {
 
 app.use('/controller', proxy(config.proxyURLStaff))
 
-app.use('/', proxy(config.proxyURLPublic))
+app.use('/embedded', proxy(config.proxyURLPublic))
