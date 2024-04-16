@@ -53,6 +53,8 @@ const corsOptions = {
   origin : ['http://tv.community-boating.org:3001', 'http://tv.community-boating.org:80']
 }
 
+//stupid github
+
 app.use(cors(corsOptions))
 
 postTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.UPDATE_RESTRICTION])
