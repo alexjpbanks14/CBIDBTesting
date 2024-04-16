@@ -415,6 +415,4 @@ app.use((err, req, res, next) => {
   })
 })
 
-app.use('/controller', proxy('http://localhost:3001'))
-
 app.use('/', proxy(config.proxyURL))
