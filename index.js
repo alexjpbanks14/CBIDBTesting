@@ -30,7 +30,7 @@ async function doPurge(){
   await giveAllPermissions(1)
 }
 
-doPurge()
+//doPurge()
 
 var lastSunset = null
 var lastTime = new Date()
