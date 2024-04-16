@@ -17,8 +17,8 @@ exports.port = port
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookies())
-var allowedOrigins = ['http://localhost:8081',
-  'http://yourapp.com', 'http://localhost:6969']
+var allowedOrigins = ['http://tv.community-boating.org:3001',
+  'http://tv.community-boating.org']
 app.use(cors({
   origin: allowedOrigins
 }))
