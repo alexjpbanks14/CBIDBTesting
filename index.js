@@ -415,4 +415,6 @@ app.use((err, req, res, next) => {
   })
 })
 
+app.use('/google', proxy('https://www.google.com'))
+
 app.use('/', proxy(config.proxyURL))
