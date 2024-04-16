@@ -333,8 +333,8 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
         const createSessionRes = await query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active, createdOn) VALUES (?, ?, ?, NOW());", [resultSQL[0].userID, uuid, true])
         .catch(e => handleError(e, req, res))
         const newID = createSessionRes.insertId
-        res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
-        res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
+        res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true, domain: "tv.community-boating.org:3001"})
+        res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true, domain: "tv.community-boating.org:3001"})
         res.json(true)
         console.log("sending goodish")
       }else {
