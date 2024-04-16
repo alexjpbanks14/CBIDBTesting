@@ -415,4 +415,8 @@ app.use((err, req, res, next) => {
   })
 })
 
+app.use('/api/ap-class-instances', proxy("http://api.community-boating.org/api/ap-class-instances"))
+
+app.use('/api/jp-class-sections', proxy("http://api.community-boating.org/api/jp-class-sections"))
+
 app.use('/', proxy(config.proxyURL))
