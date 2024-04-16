@@ -19,7 +19,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookies())
 
-var allowedOrigins = ['http://tv.community-boating.org:3001',
+var allowedOrigins = ['http://tv.community-boating.org:3000',
   'http://tv.community-boating.org']
 
 app.use(cors({
