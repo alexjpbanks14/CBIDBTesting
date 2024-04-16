@@ -335,7 +335,7 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
         res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
         res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
         res.json(true)
-        console.log("sending good")
+        console.log("sending goodish")
       }else {
         res.json({result: "BAD"})
         console.log("sending bad")
