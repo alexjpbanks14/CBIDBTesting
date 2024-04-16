@@ -2,6 +2,7 @@ const { handleError, sendUnauthorized } = require('./handleError')
 const axios = require('axios')
 const fs = require('fs')
 const bcrypt = require('bcrypt')
+const cors = require('cors')
 const { userTableInfo, imageTableInfo, restrictionGroupTableInfo, restrictionTableInfo, logoImageTableInfo, restrictionConditionTableInfo, singletonDataTableInfo, sessionTableInfo, permissionTableInfo } = require('./tableInfo')
 const { parseResult, updateRowsStatement, parseRow, postTable, deleteTable  } = require('./sqlFunc')
 const { connection, app, upload, config, port, query, apiPrefix } = require('./connection')
@@ -47,6 +48,12 @@ async function getSunsetTime() {
   }
   return lastSunset
 }
+
+const corsOptions = {
+  origin : ['http://tv.community-boating.org:3001', 'http:tv.community-boating.org:80']
+}
+
+app.use(cors(corsOptions))
 
 postTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.UPDATE_RESTRICTION])
 postTable(restrictionTableInfo, '/restriction', [PERMISSIONS.UPDATE_RESTRICTION])
