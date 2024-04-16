@@ -313,6 +313,7 @@ app.post('/toggleRestriction', async (req, res, next) => {
 
 app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
   console.log("authenticating")
+  res.header("Access-Control-Allow-Credentials", true)
   const username = String(req.body.username)
   const password = String(req.body.password)
   const resultSQL = await query("SELECT passhash, userID FROM " + userTableInfo.tableName + " WHERE username = ?;", [username])
@@ -331,7 +332,6 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
         const createSessionRes = await query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active, createdOn) VALUES (?, ?, ?, NOW());", [resultSQL[0].userID, uuid, true])
         .catch(e => handleError(e, req, res))
         const newID = createSessionRes.insertId
-        res.header("Access-Control-Allow-Credentials", true)
         res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
         res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: true})
         res.json(true)
