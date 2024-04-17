@@ -32,6 +32,8 @@ async function doPurge(){
 
 createTables()
 
+//giveAllPermissions(2)
+
 //doPurge()
 
 var lastSunset = null
@@ -313,7 +315,6 @@ app.post(apiPrefix + '/toggleRestriction', async (req, res, next) => {
 })
 
 app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
-  console.log("authenticating")
   res.header("Access-Control-Allow-Credentials", true)
   const username = String(req.body.username)
   const password = String(req.body.password)
@@ -333,13 +334,11 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
         const createSessionRes = await query("INSERT INTO " + sessionTableInfo.tableName + " (userID, sessionUUID, active, createdOn) VALUES (?, ?, ?, NOW());", [resultSQL[0].userID, uuid, true])
         .catch(e => handleError(e, req, res))
         const newID = createSessionRes.insertId
-        res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: false, domain: ".community-boating.org"})
-        res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: false, domain: ".community-boating.org"})
+        res.cookie("sessionUUID", uuid, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: false})
+        res.cookie("sessionID", newID, {maxAge: parseInt(config.authDurationDays) * 1000 * 60 * 60 * 24, secure: false})
         res.json(true)
-        console.log("sending goodish")
       }else {
         res.json({result: "BAD"})
-        console.log("sending bad")
       }
     }catch(e){
       return handleError(e, req, res)
