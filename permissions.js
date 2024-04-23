@@ -36,6 +36,7 @@ async function getCurrentSession(req){
       const sessionUUIDCli = encoder.encode(sessionUUID)
       const sessionUUIDSer = encoder.encode(session[0].sessionUUID)
       console.log("finding")
+      console.log(timingSafeEqual(sessionUUIDCli, sessionUUIDSer))
       if(timingSafeEqual(sessionUUIDCli, sessionUUIDSer))
         return session[0]
     }
