@@ -26,6 +26,7 @@ const encoder = new TextEncoder('UTF-8')
 async function getCurrentSession(req){
     const sessionUUID = String(req.cookies.sessionUUID)
     const sessionID = Number(req.cookies.sessionID)
+    console.log(req.cookies)
     if(isNaN(sessionID))
       return undefined
     const session = await query("SELECT * FROM " + sessionTableInfo.tableName + " WHERE sessionID = ? AND active = TRUE", [sessionID])
