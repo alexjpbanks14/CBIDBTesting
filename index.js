@@ -369,6 +369,7 @@ app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
           message: "Authentication failure."
         }
       })
+      console.log("Invalid user")
     }
   }else{
     res.json({
@@ -377,6 +378,7 @@ app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
         message: "Authentication failure."
       }
     })
+    console.log("no session found")
   }
 })
 
