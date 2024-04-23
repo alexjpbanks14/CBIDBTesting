@@ -354,11 +354,15 @@ async function getCurrentUsername(currentSession){
   return currentUsername.length == 0 ? undefined : currentUsername[0].username
 }
 
+console.log("starting")
+
 app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
   const currentSession = await getCurrentSession(req)
+  console.log("what")
   if(currentSession){
     const currentUsername = await getCurrentUsername(currentSession)
     if(currentUsername){
+      console.log("found it")
       res.json({
         value: currentUsername
       })
