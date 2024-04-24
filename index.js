@@ -356,11 +356,9 @@ async function getCurrentUsername(currentSession){
 
 app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
   const currentSession = await getCurrentSession(req)
-  console.log("what")
   if(currentSession){
     const currentUsername = await getCurrentUsername(currentSession)
     if(currentUsername){
-      console.log("found it")
       res.json({
         value: currentUsername
       })
@@ -371,7 +369,6 @@ app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
           message: "Authentication failure."
         }
       })
-      console.log("Invalid user")
     }
   }else{
     res.json({
@@ -380,7 +377,6 @@ app.get(apiPrefix + '/is-logged-in-as-staff', async(req, res, next) => {
         message: "Authentication failure."
       }
     })
-    console.log("no session found")
   }
 })
 

@@ -26,17 +26,12 @@ const encoder = new TextEncoder('UTF-8')
 async function getCurrentSession(req){
     const sessionUUID = String(req.cookies.sessionUUID)
     const sessionID = Number(req.cookies.sessionID)
-    console.log(req.cookies)
-    console.log(sessionID)
-    console.log(sessionUUID)
     if(isNaN(sessionID))
       return undefined
     const session = await query("SELECT * FROM " + sessionTableInfo.tableName + " WHERE sessionID = ? AND active = TRUE", [sessionID])
     if(session.length > 0 && ((new Date() - session[0].createdOn) / 1000 / 60 / 60 / 24) < parseInt(config.authDurationDays)){
       const sessionUUIDCli = encoder.encode(sessionUUID)
       const sessionUUIDSer = encoder.encode(session[0].sessionUUID)
-      console.log("finding")
-      console.log(timingSafeEqual(sessionUUIDCli, sessionUUIDSer))
       if(timingSafeEqual(sessionUUIDCli, sessionUUIDSer))
         return session[0]
     }
