@@ -349,7 +349,7 @@ app.post(apiPrefix + '/authenticate-staff', async (req, res, next) => {
 
 async function getCurrentUsername(currentSession){
   const currentUsername = await query("SELECT username FROM " + userTableInfo.tableName + " WHERE userID = ?", [currentSession.userID])
-    .catch(e => handleError(e, req, res))
+    .catch(e => handleError(e))
   return currentUsername.length == 0 ? undefined : currentUsername[0].username
 }
 
