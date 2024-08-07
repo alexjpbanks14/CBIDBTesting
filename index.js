@@ -79,7 +79,7 @@ app.get(apiPrefix + '/flag-color', (req, res) => {
       flagColor: flagColor
     }).end()
  }).catch((e) => {
-    throw e
+    res.json(e)
   })
 })
 
