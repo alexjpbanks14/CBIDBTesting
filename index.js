@@ -55,8 +55,6 @@ const corsOptions = {
   origin : ['http://tv.community-boating.org:3001', 'http://tv.community-boating.org:80']
 }
 
-//stupid github
-
 postTable(restrictionGroupTableInfo, '/restrictionGroup', [PERMISSIONS.UPDATE_RESTRICTION])
 postTable(restrictionTableInfo, '/restriction', [PERMISSIONS.UPDATE_RESTRICTION])
 postTable(logoImageTableInfo, '/logoImage', [PERMISSIONS.UPDATE_IMAGE])
@@ -70,7 +68,7 @@ deleteTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS
 deleteTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM])
 deleteTable(userTableInfo, '/users', [PERMISSIONS.DELETE_USER])
 
-const flagRegex = /".*"/
+/*const flagRegex = /".*"/
 
 const replaceRegex = new RegExp('\"', 'g')
 
@@ -83,7 +81,7 @@ app.get(apiPrefix + '/flag-color', (req, res) => {
  }).catch((e) => {
     throw e
   })
-})
+})*/
 
 app.get(apiPrefix + '/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime()
@@ -414,7 +412,7 @@ app.use((err, req, res, next) => {
 })
 
 const redirectedAPIs = ['ap-class-instances',
-'jp-class-sections']
+'jp-class-sections', 'flag-color']
 
 for(const a of redirectedAPIs){
   console.log(apiPrefix + '/' + a + '/')
