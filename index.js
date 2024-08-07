@@ -68,7 +68,7 @@ deleteTable(restrictionConditionTableInfo, '/restrictionCondition', [PERMISSIONS
 deleteTable(singletonDataTableInfo, '/singletonData', [PERMISSIONS.CHANGE_PROGRAM])
 deleteTable(userTableInfo, '/users', [PERMISSIONS.DELETE_USER])
 
-/*const flagRegex = /".*"/
+const flagRegex = /".*"/
 
 const replaceRegex = new RegExp('\"', 'g')
 
@@ -81,7 +81,7 @@ app.get(apiPrefix + '/flag-color', (req, res) => {
  }).catch((e) => {
     throw e
   })
-})*/
+})
 
 app.get(apiPrefix + '/fotv', async (req, res, next) => {
   const sunset = await getSunsetTime()
@@ -412,7 +412,7 @@ app.use((err, req, res, next) => {
 })
 
 const redirectedAPIs = ['ap-class-instances',
-'jp-class-sections', 'flag']
+'jp-class-sections']
 
 for(const a of redirectedAPIs){
   console.log(apiPrefix + '/' + a + '/')
