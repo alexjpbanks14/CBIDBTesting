@@ -412,7 +412,7 @@ app.use((err, req, res, next) => {
 })
 
 const redirectedAPIs = ['ap-class-instances',
-'jp-class-sections', 'flag-color']
+'jp-class-sections', 'flag']
 
 for(const a of redirectedAPIs){
   console.log(apiPrefix + '/' + a + '/')
